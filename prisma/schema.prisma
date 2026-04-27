@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  clerkUserId  String?       @unique
+  email        String        @unique
+  firstName    String?
+  lastName     String?
+  businessName String?
+  joinedAt     DateTime      @default(now())
+  twilioPhone  String?       @unique
+  contacts     Contact[]
+  leads        Lead[]
+  appointments Appointment[]
+  callLogs     CallLog[]
+  smsMessages  SmsMessage[]
+}
+
+model Contact {
+  id          String       @id @default(cuid())
+  fullName    String
+  email       String?
+  phone       String?
+  company     String?
+  status      ContactStatus @default(Prospect)
+  notes       String?
+  createdAt   DateTime     @default(now())
+  ownerUserId String
+  owner       User         @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  leads       Lead[]
+  appointments Appointment[]
+  callLogs    CallLog[]
+  smsMessages SmsMessage[]
+
+  @@index([ownerUserId])
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  leadTitle   String
+  contactId   String?
+  contact     Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  stage       LeadStage @default(New)
+  dealValue   Decimal   @default(0)
+  source      String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  ownerUserId String
+  owner       User      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+}
+
+model Appointment {
+  id                    String             @id @default(cuid())
+  title                 String
+  contactId             String?
+  contact               Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  startTime             DateTime
+  durationMinutes       Int                @default(30)
+  status                AppointmentStatus  @default(Scheduled)
+  type                  AppointmentType    @default(PhoneCall)
+  notes                 String?
+  googleCalendarEventId String?
+  ownerUserId           String
+  owner                 User               @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+}
+
+model CallLog {
+  id                   String                   @id @default(cuid())
+  callerPhone          String
+  callSid              String                   @unique
+  durationSeconds      Int                      @default(0)
+  direction            CallDirection
+  aiSummary            String?
+  contactId            String?
+  contact              Contact?                 @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  appointmentCreatedId String?
+  appointmentStatus    CallAppointmentStatus    @default(PendingReview)
+  calledAt             DateTime                 @default(now())
+  ownerUserId          String
+  owner                User                     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+}
+
+model SmsMessage {
+  id          String    @id @default(cuid())
+  phone       String
+  message     String
+  role        SmsRole
+  sentAt      DateTime  @default(now())
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  ownerUserId String
+  owner       User      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+}
+
+enum ContactStatus {
+  Active
+  Inactive
+  Prospect
+}
+
+enum LeadStage {
+  New
+  Contacted
+  Qualified
+  Proposal
+  Won
+  Lost
+}
+
+enum AppointmentStatus {
+  Scheduled
+  Completed
+  Cancelled
+  NoShow
+}
+
+enum AppointmentType {
+  PhoneCall
+  Meeting
+  Demo
+  FollowUp
+}
+
+enum CallDirection {
+  Inbound
+  Outbound
+}
+
+enum CallAppointmentStatus {
+  AppointmentCreated
+  NotNeeded
+  PendingReview
+}
+
+enum SmsRole {
+  Inbound
+  Outbound
+}
