@@ -52,6 +52,25 @@ function readArguments(value: unknown): Record<string, unknown> {
   return {};
 }
 
+function normalizeUsPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+${digits}`;
+  }
+
+  return "";
+}
+
+function isValidDate(value: string) {
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime());
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as VapiToolCallPayload;
 
@@ -68,15 +87,9 @@ export async function POST(request: Request) {
     ...readArguments(body),
   };
 
-  const twilioPhone = String(
-    args.twilioPhone ?? body.twilioPhone ?? ""
-  ).trim();
-  const callerPhone = String(
-    args.callerPhone ?? body.callerPhone ?? ""
-  ).trim();
-  const callerName = String(
-    args.callerName ?? body.callerName ?? ""
-  ).trim();
+  const twilioPhone = String(args.twilioPhone ?? body.twilioPhone ?? "").trim();
+  const callerPhone = String(args.callerPhone ?? body.callerPhone ?? "").trim();
+  const callerName = String(args.callerName ?? body.callerName ?? "").trim();
   const appointmentTitle = String(
     args.appointmentTitle ?? body.appointmentTitle ?? "Voice AI booking"
   ).trim();
@@ -85,36 +98,53 @@ export async function POST(request: Request) {
   const durationMinutes =
     Number(args.durationMinutes ?? body.durationMinutes ?? 30) || 30;
 
-  if (!twilioPhone || !callerPhone || !startTime) {
+  const normalizedTwilioPhone = normalizeUsPhone(twilioPhone);
+  const normalizedCallerPhone = normalizeUsPhone(callerPhone);
+
+  if (!normalizedTwilioPhone || !normalizedCallerPhone || !startTime) {
     return NextResponse.json(
       {
-        error:
-          "Missing required booking data: twilioPhone, callerPhone, startTime",
+        success: false,
+        message:
+          "Missing or invalid booking data. A valid business phone, caller phone, and appointment time are required.",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidDate(startTime)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid appointment time. Please provide a valid date and time.",
       },
       { status: 400 }
     );
   }
 
   const user = await prisma.user.findFirst({
-    where: { twilioPhone },
+    where: { twilioPhone: normalizedTwilioPhone },
   });
 
   if (!user) {
     return NextResponse.json(
-      { error: "Business not found for twilioPhone" },
+      {
+        success: false,
+        message: "Business not found for the provided business phone number.",
+      },
       { status: 404 }
     );
   }
 
   let contact = await prisma.contact.findFirst({
-    where: { ownerUserId: user.id, phone: callerPhone },
+    where: { ownerUserId: user.id, phone: normalizedCallerPhone },
   });
 
   if (!contact) {
     contact = await prisma.contact.create({
       data: {
-        fullName: callerName || callerPhone,
-        phone: callerPhone,
+        fullName: callerName || normalizedCallerPhone,
+        phone: normalizedCallerPhone,
         notes: "Auto-created from Vapi booking",
         ownerUserId: user.id,
       },
@@ -135,7 +165,7 @@ export async function POST(request: Request) {
 
   await prisma.callLog.create({
     data: {
-      callerPhone,
+      callerPhone: normalizedCallerPhone,
       callSid: `vapi_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       durationSeconds: 0,
       direction: CallDirection.Inbound,
@@ -149,7 +179,9 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     success: true,
-    contact,
-    appointment,
+    message: `Appointment booked successfully for ${contact.fullName}.`,
+    appointmentId: appointment.id,
+    contactId: contact.id,
+    startTime: appointment.startTime,
   });
 }
