@@ -1,7 +1,6 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+// next.config.ts
+const nextConfig = {
+  allowedDevOrigins: ["10.0.0.75"],
 };
 
 export default nextConfig;
