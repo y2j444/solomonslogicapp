@@ -128,7 +128,7 @@ export function AppShell({
                         Sign out
                       </button>
                     </SignOutButton>
-                    <div className="rounded-md bg-white/5 px-1 py-1">
+                       <div className="rounded-md bg-white/5 px-1 py-1">
                       <UserButton afterSignOutUrl="/sign-in" />
                     </div>
                   </>
