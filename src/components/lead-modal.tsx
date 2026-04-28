@@ -12,11 +12,20 @@ type LeadPayload = {
   notes?: string;
 };
 
+type LeadInitialValue = {
+  id?: string;
+  leadTitle: string;
+  stage?: string;
+  source?: string | null;
+  dealValue?: number;
+  notes?: string | null;
+};
+
 type LeadModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (lead: LeadPayload) => Promise<void>;
-  initialLead?: LeadPayload | null;
+  initialLead?: LeadInitialValue | null;
 };
 
 const initialFormData = {
