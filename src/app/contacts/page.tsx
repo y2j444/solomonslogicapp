@@ -16,6 +16,13 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    company: "",
+  });
 
   useEffect(() => {
     void fetch("/api/contacts")
@@ -35,16 +42,106 @@ export default function ContactsPage() {
     );
   }, [contacts, query]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (response.ok) {
+        const newContact = await response.json();
+        setContacts((prev) => [newContact, ...prev]);
+        setFormData({ fullName: "", email: "", phone: "", company: "" });
+        setShowForm(false);
+      }
+    } catch (error) {
+      console.error("Failed to create contact:", error);
+    }
+  };
+
   return (
     <AppShell
       title="Contacts"
       subtitle={isLoading ? "Loading contacts..." : `${contacts.length} contacts`}
       action={
-        <button className="rounded-md bg-[#355cc9] px-3 py-2 text-sm font-medium text-white">
+        <button
+          onClick={() => setShowForm(true)}
+          className="rounded-md bg-[#355cc9] px-3 py-2 text-sm font-medium text-white hover:bg-[#456ce0]"
+        >
           +
         </button>
       }
     >
+      {showForm && (
+        <Surface className="mb-4 p-5">
+          <h2 className="text-sm font-semibold">Add New Contact</h2>
+          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+            <div>
+              <label className="block text-sm text-zinc-400">Full Name *</label>
+              <input
+                type="text"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                className="mt-1 w-full rounded-md border border-white/10 bg-[#161a27] px-3 py-2 text-sm outline-none focus:border-[#4f71e8]"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-zinc-400">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="mt-1 w-full rounded-md border border-white/10 bg-[#161a27] px-3 py-2 text-sm outline-none focus:border-[#4f71e8]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-zinc-400">Phone</label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="mt-1 w-full rounded-md border border-white/10 bg-[#161a27] px-3 py-2 text-sm outline-none focus:border-[#4f71e8]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-zinc-400">Company</label>
+              <input
+                type="text"
+                value={formData.company}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                className="mt-1 w-full rounded-md border border-white/10 bg-[#161a27] px-3 py-2 text-sm outline-none focus:border-[#4f71e8]"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="rounded-md bg-[#355cc9] px-3 py-2 text-sm font-medium text-white hover:bg-[#456ce0]"
+              >
+                Create Contact
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="rounded-md bg-white/5 px-3 py-2 text-sm text-zinc-200 hover:bg-white/10"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Surface>
+      )}
+
+      <div className="mb-3 max-w-xs">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search contacts..."
+          className="w-full rounded-md border border-white/10 bg-[#161a27] px-3 py-2 text-sm outline-none placeholder:text-zinc-500 focus:border-[#4f71e8]"
+        />
+      </div>
       <div className="mb-3 max-w-xs">
         <input
           value={query}
