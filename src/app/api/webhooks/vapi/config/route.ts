@@ -4,29 +4,27 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    console.log("Vapi config webhook: Received message type:", body.message?.type);
+    const messageType = body.message?.type;
+    console.log(`Vapi config webhook: Received message type: ${messageType}`);
 
-    // Vapi sends an 'assistant-request' message to get dynamic configuration
-    if (body.message?.type !== "assistant-request") {
-      // For other message types (like tool-calls or status-updates), we just return 200
-      // The BookAppointment tool call is handled by its own serverUrl if configured,
-      // but if Vapi is configured to use the same Server URL for everything,
-      // we need to be careful not to override tool responses here.
+    // If it's not a request for configuration, just acknowledge
+    if (messageType !== "assistant-request" && messageType !== "assistant.started") {
       return NextResponse.json({ status: "ok" });
     }
 
-    const twilioPhoneNumber = body.message?.phoneNumber?.number || body.message?.call?.phoneNumber?.number;
-
-    console.log("Vapi config webhook: Extracted twilioPhoneNumber:", twilioPhoneNumber);
+    const twilioPhoneNumber =
+      body.message?.phoneNumber?.number ||
+      body.message?.call?.phoneNumber?.number ||
+      body.phoneNumber?.number;
 
     if (!twilioPhoneNumber) {
-      console.error("Vapi config webhook: Missing twilioPhoneNumber in request.");
-      return NextResponse.json({}); // Return empty to let Vapi use defaults
+      console.log("Vapi config webhook: No twilioPhoneNumber found.");
+      return NextResponse.json({});
     }
 
-    // Normalize phone number for database lookup (E.164)
     const normalizedPhone = twilioPhoneNumber.startsWith('+') ? twilioPhoneNumber : `+${twilioPhoneNumber}`;
 
+    // Find the business owner by the Twilio number called
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -37,29 +35,53 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      console.error(`Vapi config webhook: No user found for phone: ${normalizedPhone}`);
-      return NextResponse.json({}); // Fallback to Vapi defaults
+      console.log(`Vapi config webhook: No user found for ${normalizedPhone}`);
+      return NextResponse.json({});
     }
 
-    const businessName = user.businessName || "our team";
-    console.log(`Vapi config webhook: Found business: ${businessName}. Sending overrides.`);
+    const businessName = user.businessName?.trim() || "our team";
+    console.log(`Vapi config webhook: Overriding config for ${businessName}`);
 
-    // This is the specific response structure Vapi expects for 'assistant-request' overrides
-    const responseOverrides = {
+    // This response overrides the Assistant configuration dynamically
+    return NextResponse.json({
       assistant: {
         firstMessage: `Thank you for calling ${businessName}! How can I help you today?`,
         model: {
           messages: [
             {
               role: "system",
-              content: `Current date/time: {{now}}\nBusiness timezone: America/New_York.\n\nYou are an AI receptionist for ${businessName}.\n\nYour job is to book appointments.\n\nCollect these required details:\n1. Caller full name\n2. Caller phone number\n3. Appointment reason\n4. Appointment date and time\n\nImportant rules:\n- Do not call BookAppointment until all required details are collected.\n- Do not call lookup-contact.\n- Do not call any contact lookup tool.\n- Only use the BookAppointment tool for booking.\n- If the caller gives a phone number verbally, convert it into digits.\n- Repeat the phone number back once for confirmation.\n- Once the caller confirms the phone number and appointment time, do not ask for them again.\n- After BookAppointment succeeds, tell the caller the appointment is booked.\n\nWhen calling BookAppointment:\n- Set twilioPhone to "${normalizedPhone}" exactly. \n- Set callerName to the caller's full name.\n- Set callerPhone to the confirmed phone number.\n- Set appointmentTitle to the appointment reason.\n- Set startTime to the confirmed appointment time in ISO 8601 format.\n- Set durationMinutes to 30 unless the caller requests a different duration.\n- Put a short call summary in notes.\n\nIf BookAppointment succeeds, say:\n"You're all set. Your appointment is booked."\n\nNever ask for the phone number or booking time again after the tool succeeds.`,
+              content: `Current date/time: {{now}}
+Business timezone: America/New_York.
+
+You are a professional AI receptionist for ${businessName}.
+
+Your primary goal is to assist callers by booking appointments into the system.
+
+### Required Information to Collect:
+1. **Full Name**: The caller's first and last name.
+2. **Phone Number**: The best contact number for the caller.
+3. **Reason**: A brief description of why they are booking.
+4. **Date and Time**: When they would like the appointment to occur.
+
+### Critical Rules:
+- **Tool Usage**: Do not invoke 'BookAppointment' until you have collected and confirmed all four required details.
+- **No Lookups**: Do not attempt to use any contact lookup or search tools.
+- **Phone Numbers**: If a caller provides a number, repeat it back to ensure accuracy before proceeding.
+- **Post-Booking**: Once 'BookAppointment' returns a success, inform the caller: "You're all set. Your appointment is booked for [Time]." Do not ask for their details again.
+
+### Tool Parameters for 'BookAppointment':
+- **twilioPhone**: Must be exactly "${normalizedPhone}".
+- **callerName**: The caller's full name.
+- **callerPhone**: The confirmed contact number.
+- **appointmentTitle**: The reason for the appointment.
+- **startTime**: The confirmed time in ISO 8601 format.
+- **durationMinutes**: Default to 30.
+- **notes**: A concise summary of the call.`,
             },
           ],
         },
       },
-    };
-
-    return NextResponse.json(responseOverrides);
+    });
   } catch (error) {
     console.error("Vapi config webhook failed:", error);
     return NextResponse.json({}, { status: 500 });
