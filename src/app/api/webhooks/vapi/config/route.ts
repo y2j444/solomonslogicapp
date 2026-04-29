@@ -4,40 +4,28 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    console.log("Vapi config webhook: Received body:", JSON.stringify(body, null, 2));
+    console.log("Vapi config webhook: Received message type:", body.message?.type);
 
-    let twilioPhoneNumber = body.message?.phoneNumber?.number || body.phoneNumber?.number;
-
-    if (!twilioPhoneNumber) {
-       console.error("Vapi config webhook: Missing twilioPhoneNumber in request body.");
-       // Try to find it elsewhere in the body just in case
-       twilioPhoneNumber = body.call?.phoneNumber?.number;
+    // Vapi sends an 'assistant-request' message to get dynamic configuration
+    if (body.message?.type !== "assistant-request") {
+      // For other message types (like tool-calls or status-updates), we just return 200
+      // The BookAppointment tool call is handled by its own serverUrl if configured,
+      // but if Vapi is configured to use the same Server URL for everything,
+      // we need to be careful not to override tool responses here.
+      return NextResponse.json({ status: "ok" });
     }
+
+    const twilioPhoneNumber = body.message?.phoneNumber?.number || body.message?.call?.phoneNumber?.number;
 
     console.log("Vapi config webhook: Extracted twilioPhoneNumber:", twilioPhoneNumber);
 
     if (!twilioPhoneNumber) {
-      return NextResponse.json(
-        {
-          assistant: {
-            firstMessage: "I'm sorry, I cannot identify the business you are trying to reach. Please try again later.",
-            model: {
-              messages: [
-                {
-                  role: "system",
-                  content: "You are an AI receptionist. You could not identify the business. Apologize and end the call.",
-                },
-              ],
-            },
-          },
-        },
-        { status: 200 }
-      );
+      console.error("Vapi config webhook: Missing twilioPhoneNumber in request.");
+      return NextResponse.json({}); // Return empty to let Vapi use defaults
     }
 
     // Normalize phone number for database lookup (E.164)
     const normalizedPhone = twilioPhoneNumber.startsWith('+') ? twilioPhoneNumber : `+${twilioPhoneNumber}`;
-    console.log("Vapi config webhook: Normalized phone for lookup:", normalizedPhone);
 
     const user = await prisma.user.findFirst({
       where: {
@@ -49,29 +37,15 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      console.error(`Vapi config webhook: No user found for normalized phone: ${normalizedPhone} or raw phone: ${twilioPhoneNumber}`);
-      return NextResponse.json(
-        {
-          assistant: {
-            firstMessage: "I'm sorry, the business associated with this number is not configured. Please try again later.",
-            model: {
-              messages: [
-                {
-                  role: "system",
-                  content: "You are an AI receptionist. You could not find a business for this number. Apologize and end the call.",
-                },
-              ],
-            },
-          },
-        },
-        { status: 200 }
-      );
+      console.error(`Vapi config webhook: No user found for phone: ${normalizedPhone}`);
+      return NextResponse.json({}); // Fallback to Vapi defaults
     }
 
     const businessName = user.businessName || "our team";
-    console.log(`Vapi config webhook: Found business: ${businessName}`);
+    console.log(`Vapi config webhook: Found business: ${businessName}. Sending overrides.`);
 
-    const vapiConfig = {
+    // This is the specific response structure Vapi expects for 'assistant-request' overrides
+    const responseOverrides = {
       assistant: {
         firstMessage: `Thank you for calling ${businessName}! How can I help you today?`,
         model: {
@@ -82,35 +56,12 @@ export async function POST(req: Request) {
             },
           ],
         },
-        tools: [
-          {
-            name: "BookAppointment",
-            parameters: {
-              twilioPhone: normalizedPhone,
-            },
-          },
-        ],
       },
     };
 
-    return NextResponse.json(vapiConfig);
+    return NextResponse.json(responseOverrides);
   } catch (error) {
     console.error("Vapi config webhook failed:", error);
-    return NextResponse.json(
-      {
-        assistant: {
-          firstMessage: "I'm sorry, there was an internal error. Please try again later.",
-          model: {
-            messages: [
-              {
-                role: "system",
-                content: "You are an AI receptionist. An internal error occurred. Apologize and end the call.",
-              },
-            ],
-          },
-        },
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({}, { status: 500 });
   }
 }
