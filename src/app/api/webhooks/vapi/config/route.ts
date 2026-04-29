@@ -80,6 +80,15 @@ Your primary goal is to assist callers by booking appointments into the system.
             },
           ],
         },
+        // IMPORTANT: Dynamically override tool parameters here
+        tools: [
+          {
+            name: "BookAppointment",
+            parameters: {
+              twilioPhone: normalizedPhone, // Set the twilioPhone dynamically
+            },
+          },
+        ],
       },
     });
   } catch (error) {
