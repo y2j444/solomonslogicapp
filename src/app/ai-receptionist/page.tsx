@@ -57,6 +57,16 @@ export default function AiReceptionistPage() {
           <li>The call log is written for follow-up and reporting.</li>
         </ol>
       </Surface>
+
+      <Surface className="mt-4 p-5">
+        <h2 className="text-sm font-semibold">SMS receptionist behavior</h2>
+        <ul className="mt-4 space-y-2 text-sm text-zinc-400">
+          <li>Inbound texts are attached to a contact automatically.</li>
+          <li>Scheduling, quote, and callback requests create or update an SMS lead.</li>
+          <li>STOP and START are handled for opt-out and resume.</li>
+          <li>Hours replies can use <code>BUSINESS_HOURS_TEXT</code> when configured.</li>
+        </ul>
+      </Surface>
     </AppShell>
   );
 }

@@ -74,6 +74,23 @@ function isValidDate(value: string) {
   return !Number.isNaN(date.getTime());
 }
 
+function isPastAppointment(date: Date) {
+  const fiveMinuteGraceMs = 5 * 60 * 1000;
+  return date.getTime() < Date.now() - fiveMinuteGraceMs;
+}
+
+function formatAppointmentDate(date: Date) {
+  return date.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
 function vapiResult(toolCallId: string | undefined, result: string, status = 200) {
   if (!toolCallId) {
     return NextResponse.json(
@@ -181,6 +198,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const appointmentDate = new Date(startTime);
+
+    if (isPastAppointment(appointmentDate)) {
+      return vapiResult(
+        toolCallId,
+        `The requested appointment time resolves to a past date (${formatAppointmentDate(
+          appointmentDate
+        )}). Ask for a future date and time before booking.`,
+        400
+      );
+    }
+
     const user = await prisma.user.findFirst({
       where: { twilioPhone: normalizedTwilioPhone },
     });
@@ -212,7 +241,7 @@ export async function POST(request: Request) {
       data: {
         title: appointmentTitle,
         contactId: contact.id,
-        startTime: new Date(startTime),
+        startTime: appointmentDate,
         durationMinutes,
         type: AppointmentType.PhoneCall,
         notes,

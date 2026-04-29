@@ -1,6 +1,7 @@
 import { smsResponse } from "@/lib/twiml";
 import { ContactStatus, SmsRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { handleSmsReceptionist } from "@/lib/sms-receptionist";
 
 function formToRecord(form: FormData): Record<string, string> {
   const params: Record<string, string> = {};
@@ -63,7 +64,21 @@ export async function POST(request: Request) {
     },
   });
 
-  const replyText = `Thanks for contacting ${user.businessName}. We received: "${inbound.slice(0, 120)}". A team member can follow up shortly.`;
+  const recentMessages = await prisma.smsMessage.findMany({
+    where: {
+      ownerUserId: user.id,
+      contactId: contact.id,
+    },
+    orderBy: { sentAt: "desc" },
+    take: 6,
+  });
+
+  const replyText = await handleSmsReceptionist({
+    user,
+    contact,
+    inbound,
+    recentMessages,
+  });
 
   await prisma.smsMessage.create({
     data: {
