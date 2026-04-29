@@ -33,26 +33,35 @@ export function AppShell({
   action?: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded: isUserLoaded } = useUser();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   useEffect(() => {
+    if (!isUserLoaded) return;
+
     if (!isSignedIn) {
       setProfile(null);
+      setIsLoadingProfile(false);
       return;
     }
 
+    setIsLoadingProfile(true);
     void fetch("/api/users/profile")
       .then((response) => response.json())
-      .then(setProfile)
-      .catch(() => setProfile(null));
-  }, [isSignedIn]);
+      .then((data) => {
+        setProfile(data);
+      })
+      .catch(() => setProfile(null))
+      .finally(() => setIsLoadingProfile(false));
+  }, [isSignedIn, isUserLoaded]);
 
-  const businessName = profile?.businessName ?? "Solomon's Logic";
+  // Determine the display name
+  const businessName = profile?.businessName || (isLoadingProfile ? "" : "Solomon's Logic");
   const userLabel =
     profile?.firstName || profile?.lastName
       ? [profile.firstName, profile.lastName].filter(Boolean).join(" ")
-      : profile?.email ?? "Signed in";
+      : profile?.email ?? (isLoadingProfile ? "Loading..." : "Signed in");
 
   return (
     <div className="min-h-screen bg-[#11131b] text-zinc-100">
@@ -61,12 +70,12 @@ export function AppShell({
           <div className="flex h-16 items-center gap-3 border-b border-white/5 px-4">
             <div className="grid h-8 w-8 place-items-center rounded-md bg-[#5b7cfa] text-white shadow-lg shadow-blue-500/20">
               <span className="text-sm font-bold">
-                {businessName.charAt(0).toUpperCase()}
+                {businessName ? businessName.charAt(0).toUpperCase() : "?"}
               </span>
             </div>
             <div>
-              <div className="text-sm font-semibold leading-none">
-                {businessName}
+              <div className="text-sm font-semibold leading-none min-h-[1em]">
+                {businessName || <div className="h-4 w-24 animate-pulse rounded bg-white/5" />}
               </div>
             </div>
           </div>
@@ -96,8 +105,12 @@ export function AppShell({
 
           <div className="border-t border-white/5 p-3">
             <div className="rounded-xl bg-white/5 p-3">
-              <div className="text-sm font-medium">{businessName}</div>
-              <div className="mt-1 text-xs text-zinc-500">{userLabel}</div>
+              <div className="text-sm font-medium">
+                {businessName || <div className="h-4 w-20 animate-pulse rounded bg-white/10" />}
+              </div>
+              <div className="mt-1 text-xs text-zinc-500">
+                {isLoadingProfile ? "Loading..." : userLabel}
+              </div>
             </div>
           </div>
         </aside>
@@ -115,7 +128,9 @@ export function AppShell({
               <div className="flex items-center gap-3">
                 {action ? <div>{action}</div> : null}
 
-                {!isSignedIn ? (
+                {!isUserLoaded || isLoadingProfile ? (
+                   <div className="h-9 w-20 animate-pulse rounded-md bg-white/5" />
+                ) : !isSignedIn ? (
                   <SignInButton mode="modal">
                     <button className="rounded-md bg-white/5 px-3 py-2 text-sm font-medium text-zinc-100 hover:bg-white/10">
                       Sign in
