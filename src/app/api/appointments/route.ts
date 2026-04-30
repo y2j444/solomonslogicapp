@@ -274,7 +274,7 @@ export async function POST(request: Request) {
       body.toolCallList ||
       body.toolCalls ||
       twilioPhone ||
-      callerPhone
+      normalizedCallerPhone
   );
 
   if (isVapiToolCall) {
