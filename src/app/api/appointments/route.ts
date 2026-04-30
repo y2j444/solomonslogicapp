@@ -244,8 +244,10 @@ export async function POST(request: Request) {
     body.message?.call?.customer?.name ??
     "";
 
-  // Use || not ?? so empty strings from AI args fall through to payload-extracted values
-  const twilioPhone = (String(args.twilioPhone ?? "").trim() || String(body.twilioPhone ?? "").trim() || businessPhoneFromPayload);
+  // Business phone: ALWAYS use what Vapi sends in the payload — never trust the AI's args for this.
+  // The AI doesn't know the business number and often sends the caller's number instead.
+  const twilioPhone = businessPhoneFromPayload || String(body.twilioPhone ?? "").trim();
+  // Caller phone/name: prefer AI args (it has the spoken values), fall back to Vapi payload
   const callerPhone = (String(args.callerPhone ?? "").trim() || String(body.callerPhone ?? "").trim() || callerPhoneFromPayload);
   const callerName = (String(args.callerName ?? "").trim() || String(body.callerName ?? "").trim() || callerNameFromPayload);
   const appointmentTitle = String(
