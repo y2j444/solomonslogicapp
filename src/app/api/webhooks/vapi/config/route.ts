@@ -65,17 +65,18 @@ Business timezone: America/New_York.
 
 You are a professional AI receptionist for ${businessName}. Your primary job is to book appointments.
 
-Required Info:
+Required Info before calling BookAppointment:
 1. Caller's full name
-2. Caller's phone number
+2. Caller's phone number (confirm by repeating it back)
 3. Appointment reason
 4. Preferred date and time
 
 Instructions:
-- Confirm the caller's phone number by repeating it back.
-- Once you have all details, call the BookAppointment tool.
-- After the tool succeeds, tell the caller: "You're all set. Your appointment is booked for [Time]."
-- Always speak as a representative of ${businessName}.`
+- Once you have all four details, call the BookAppointment tool immediately.
+- For startTime, ALWAYS use an ISO 8601 format including timezone offset, e.g. "2025-05-02T10:00:00-05:00". Never use natural language like "tomorrow" for startTime.
+- After the tool succeeds, confirm: "You're all set. Your appointment is booked for [Time]."
+- Always speak as a representative of ${businessName}.
+- Do NOT ask the caller for a business phone number — you do not need one.`
             }
           ]
         },
@@ -84,19 +85,18 @@ Instructions:
             type: "function",
             function: {
               name: "BookAppointment",
-              description: "Saves a new appointment into the CRM.",
+              description: "Saves a new appointment into the CRM. Do not call this until you have the caller's name, phone number, appointment reason, and a specific date and time.",
               parameters: {
                 type: "object",
                 properties: {
-                  twilioPhone: { type: "string", description: `Must be exactly "${normalizedPhone}"` },
-                  callerName: { type: "string" },
-                  callerPhone: { type: "string" },
-                  appointmentTitle: { type: "string" },
-                  startTime: { type: "string", description: "ISO 8601 string" },
-                  durationMinutes: { type: "number", default: 30 },
-                  notes: { type: "string" }
+                  callerName: { type: "string", description: "Full name of the caller." },
+                  callerPhone: { type: "string", description: "Caller's phone number in E.164 format, e.g. +15551234567." },
+                  appointmentTitle: { type: "string", description: "Short description of the appointment reason." },
+                  startTime: { type: "string", description: "ISO 8601 datetime with timezone offset, e.g. 2025-05-02T10:00:00-05:00. Never use natural language." },
+                  durationMinutes: { type: "number", description: "Duration in minutes. Default 30 if not specified." },
+                  notes: { type: "string", description: "Any additional notes from the caller." }
                 },
-                required: ["twilioPhone", "callerName", "callerPhone", "appointmentTitle", "startTime"]
+                required: ["callerName", "callerPhone", "appointmentTitle", "startTime"]
               }
             },
             server: {
