@@ -244,9 +244,10 @@ export async function POST(request: Request) {
     body.message?.call?.customer?.name ??
     "";
 
-  const twilioPhone = String(args.twilioPhone ?? body.twilioPhone ?? businessPhoneFromPayload).trim();
-  const callerPhone = String(args.callerPhone ?? body.callerPhone ?? callerPhoneFromPayload).trim();
-  const callerName = String(args.callerName ?? body.callerName ?? callerNameFromPayload).trim();
+  // Use || not ?? so empty strings from AI args fall through to payload-extracted values
+  const twilioPhone = (String(args.twilioPhone ?? "").trim() || String(body.twilioPhone ?? "").trim() || businessPhoneFromPayload);
+  const callerPhone = (String(args.callerPhone ?? "").trim() || String(body.callerPhone ?? "").trim() || callerPhoneFromPayload);
+  const callerName = (String(args.callerName ?? "").trim() || String(body.callerName ?? "").trim() || callerNameFromPayload);
   const appointmentTitle = String(
     args.appointmentTitle ??
       args.title ??
