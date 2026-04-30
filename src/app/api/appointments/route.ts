@@ -17,11 +17,28 @@ type VapiToolCall = {
   arguments?: string | Record<string, unknown>;
 };
 
-type AppointmentPayload = {
-  message?: {
-    toolCallList?: VapiToolCall[];
-    toolCalls?: VapiToolCall[];
+type VapiMessage = {
+  toolCallList?: VapiToolCall[];
+  toolCalls?: VapiToolCall[];
+  // The phone number the call came in on (the business's Vapi number)
+  phoneNumber?: {
+    number?: string;
   };
+  // The caller's phone number
+  customer?: {
+    number?: string;
+    name?: string;
+  };
+  call?: {
+    customer?: {
+      number?: string;
+      name?: string;
+    };
+  };
+};
+
+type AppointmentPayload = {
+  message?: VapiMessage;
   toolCallList?: VapiToolCall[];
   toolCalls?: VapiToolCall[];
   toolCallId?: string;
@@ -74,9 +91,63 @@ function isValidDate(value: string) {
   return !Number.isNaN(date.getTime());
 }
 
+/**
+ * If the AI sends a date without a timezone offset (e.g. "2025-05-01T10:00:00"),
+ * JavaScript treats it as UTC which can make "tomorrow 10am CST" look like the past.
+ * We detect bare local-looking strings and re-interpret them in the business timezone.
+ */
+function parseAppointmentDate(value: string, timeZone = "America/Chicago"): Date {
+  // Already has timezone info — trust it directly
+  if (/Z$|[+-]\d{2}:?\d{2}$/.test(value.trim())) {
+    return new Date(value);
+  }
+
+  // Bare ISO-like string — reinterpret in business timezone
+  try {
+    const { Temporal } = Intl as unknown as { Temporal?: unknown };
+    void Temporal; // only here if available; fall through otherwise
+  } catch { /* ignore */ }
+
+  // Use Intl.DateTimeFormat trick to shift bare date into the correct timezone
+  const bare = new Date(value);
+  if (Number.isNaN(bare.getTime())) return bare; // let caller handle NaN
+
+  // Re-express the bare date as if it were local time in the target timezone
+  const utcMs = bare.getTime();
+  const tzOffset = getTimezoneOffsetMs(timeZone, bare);
+  return new Date(utcMs + tzOffset);
+}
+
+function getTimezoneOffsetMs(timeZone: string, date: Date): number {
+  try {
+    // Get what UTC time corresponds to the given wall-clock in the target zone
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(date);
+
+    const get = (type: string) =>
+      parseInt(parts.find((p) => p.type === type)?.value ?? "0", 10);
+
+    const localDate = new Date(
+      Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"), get("second"))
+    );
+    return date.getTime() - localDate.getTime();
+  } catch {
+    return 0;
+  }
+}
+
 function isPastAppointment(date: Date) {
-  const fiveMinuteGraceMs = 5 * 60 * 1000;
-  return date.getTime() < Date.now() - fiveMinuteGraceMs;
+  // Use a 2-hour grace window to account for timezone ambiguity in natural language dates
+  const graceMs = 2 * 60 * 60 * 1000;
+  return date.getTime() < Date.now() - graceMs;
 }
 
 function formatAppointmentDate(date: Date) {
@@ -154,9 +225,25 @@ export async function POST(request: Request) {
     ...readArguments(body),
   };
 
-  const twilioPhone = String(args.twilioPhone ?? body.twilioPhone ?? "").trim();
-  const callerPhone = String(args.callerPhone ?? body.callerPhone ?? "").trim();
-  const callerName = String(args.callerName ?? body.callerName ?? "").trim();
+  // Business phone: prefer what Vapi sends in the call payload (the number the caller dialed)
+  // so the AI never needs to ask the caller for it.
+  const businessPhoneFromPayload =
+    body.message?.phoneNumber?.number ?? "";
+
+  // Caller phone: Vapi sends this in message.customer.number
+  const callerPhoneFromPayload =
+    body.message?.customer?.number ??
+    body.message?.call?.customer?.number ??
+    "";
+
+  const callerNameFromPayload =
+    body.message?.customer?.name ??
+    body.message?.call?.customer?.name ??
+    "";
+
+  const twilioPhone = String(args.twilioPhone ?? body.twilioPhone ?? businessPhoneFromPayload).trim();
+  const callerPhone = String(args.callerPhone ?? body.callerPhone ?? callerPhoneFromPayload).trim();
+  const callerName = String(args.callerName ?? body.callerName ?? callerNameFromPayload).trim();
   const appointmentTitle = String(
     args.appointmentTitle ??
       args.title ??
@@ -182,10 +269,10 @@ export async function POST(request: Request) {
   );
 
   if (isVapiToolCall) {
-    if (!normalizedTwilioPhone || !normalizedCallerPhone || !startTime) {
+    if (!normalizedCallerPhone || !startTime) {
       return vapiResult(
         toolCallId,
-        "Missing or invalid booking data. A valid business phone, caller phone, and appointment time are required.",
+        "Missing booking data. A caller phone number and appointment time are required.",
         400
       );
     }
@@ -198,28 +285,36 @@ export async function POST(request: Request) {
       );
     }
 
-    const appointmentDate = new Date(startTime);
+    const appointmentDate = parseAppointmentDate(startTime);
 
     if (isPastAppointment(appointmentDate)) {
       return vapiResult(
         toolCallId,
         `The requested appointment time resolves to a past date (${formatAppointmentDate(
           appointmentDate
-        )}). Ask for a future date and time before booking.`,
+        )}). Please confirm the date with the caller and try a future date and time.`,
         400
       );
     }
 
-    const user = await prisma.user.findFirst({
-      where: { twilioPhone: normalizedTwilioPhone },
-    });
+    // Look up business by phone number. If we have it from the payload, use it;
+    // otherwise fall back to finding by caller phone (for single-tenant setups).
+    let user = normalizedTwilioPhone
+      ? await prisma.user.findFirst({ where: { twilioPhone: normalizedTwilioPhone } })
+      : null;
 
     if (!user) {
-      return vapiResult(
-        toolCallId,
-        "Business not found for the provided business phone number.",
-        404
-      );
+      // Fallback: if there's only one user in the system, use them
+      const allUsers = await prisma.user.findMany({ take: 2 });
+      if (allUsers.length === 1) {
+        user = allUsers[0];
+      } else {
+        return vapiResult(
+          toolCallId,
+          "Could not identify the business account for this call. Please contact support.",
+          404
+        );
+      }
     }
 
     let contact = await prisma.contact.findFirst({
