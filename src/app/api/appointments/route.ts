@@ -96,9 +96,13 @@ function isValidDate(value: string) {
  * JavaScript treats it as UTC which can make "tomorrow 10am CST" look like the past.
  * We detect bare local-looking strings and re-interpret them in the business timezone.
  */
-function parseAppointmentDate(value: string, timeZone = "America/Chicago"): Date {
-  // Already has timezone info — trust it directly
-  if (/Z$|[+-]\d{2}:?\d{2}$/.test(value.trim())) {
+function parseAppointmentDate(rawValue: string, timeZone = "America/Chicago"): Date {
+  // The AI often incorrectly appends 'Z' (UTC) to what is actually a local wall-clock time.
+  // Strip the trailing 'Z' so we treat it as a bare local string and offset it correctly.
+  const value = rawValue.trim().replace(/Z$/i, "");
+
+  // Already has an explicit offset (e.g. -05:00) — trust it directly
+  if (/[+-]\d{2}:?\d{2}$/.test(value)) {
     return new Date(value);
   }
 
