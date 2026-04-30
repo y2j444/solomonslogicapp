@@ -245,10 +245,8 @@ export async function POST(request: Request) {
     "";
 
   // Business phone: ALWAYS use what Vapi sends in the payload — never trust the AI's args for this.
-  // The AI doesn't know the business number and often sends the caller's number instead.
   const twilioPhone = businessPhoneFromPayload || String(body.twilioPhone ?? "").trim();
-  // Caller phone/name: prefer AI args (it has the spoken values), fall back to Vapi payload
-  const callerPhone = (String(args.callerPhone ?? "").trim() || String(body.callerPhone ?? "").trim() || callerPhoneFromPayload);
+  // Caller name: prefer AI args (spoken), fall back to Vapi payload
   const callerName = (String(args.callerName ?? "").trim() || String(body.callerName ?? "").trim() || callerNameFromPayload);
   const appointmentTitle = String(
     args.appointmentTitle ??
@@ -263,7 +261,12 @@ export async function POST(request: Request) {
     Number(args.durationMinutes ?? body.durationMinutes ?? 30) || 30;
 
   const normalizedTwilioPhone = normalizeUsPhone(twilioPhone);
-  const normalizedCallerPhone = normalizeUsPhone(callerPhone);
+  // Normalize each caller phone candidate independently; take first valid result.
+  // This handles the AI sending just "+1" (country code only) which would normalize to "".
+  const normalizedCallerPhone =
+    normalizeUsPhone(String(args.callerPhone ?? "").trim()) ||
+    normalizeUsPhone(String(body.callerPhone ?? "").trim()) ||
+    normalizeUsPhone(callerPhoneFromPayload);
 
   const isVapiToolCall = Boolean(
     toolCallId ||
@@ -301,18 +304,31 @@ export async function POST(request: Request) {
     }
 
     const appointmentDate = parseAppointmentDate(startTime);
+
+    // Server-side date sanity check: if the AI booked "today" but the caller said "tomorrow",
+    // the AI often sends today's date. If the booked time is today and within 8 hours from now,
+    // bump it forward 1 day. This is a safe heuristic for a voice booking context.
+    const eightHoursMs = 8 * 60 * 60 * 1000;
+    const msUntilAppointment = appointmentDate.getTime() - Date.now();
+    const isWithin8HoursFromNow = msUntilAppointment >= 0 && msUntilAppointment < eightHoursMs;
+    const correctedDate = isWithin8HoursFromNow
+      ? new Date(appointmentDate.getTime() + 24 * 60 * 60 * 1000)
+      : appointmentDate;
+
     console.log("[appointments] PARSED DATE:", {
       raw: startTime,
       parsed: appointmentDate.toISOString(),
+      corrected: correctedDate.toISOString(),
       now: new Date().toISOString(),
-      isPast: isPastAppointment(appointmentDate),
+      bumpedByOneDay: isWithin8HoursFromNow,
+      isPast: isPastAppointment(correctedDate),
     });
 
-    if (isPastAppointment(appointmentDate)) {
+    if (isPastAppointment(correctedDate)) {
       return vapiResult(
         toolCallId,
         `The requested appointment time resolves to a past date (${formatAppointmentDate(
-          appointmentDate
+          correctedDate
         )}). Please confirm the date with the caller and try a future date and time.`,
         400
       );
@@ -357,7 +373,7 @@ export async function POST(request: Request) {
       data: {
         title: appointmentTitle,
         contactId: contact.id,
-        startTime: appointmentDate,
+        startTime: correctedDate,
         durationMinutes,
         type: AppointmentType.PhoneCall,
         notes,
