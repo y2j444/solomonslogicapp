@@ -4,27 +4,23 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const messageType = body.message?.type;
-    console.log(`Vapi config webhook: Received message type: ${messageType}`);
+    console.log("Vapi Webhook received:", body.message?.type || "No message type");
 
-    // If it's not a request for configuration, just acknowledge
-    if (messageType !== "assistant-request" && messageType !== "assistant.started") {
-      return NextResponse.json({ status: "ok" });
-    }
-
+    // Extract the Twilio number that was called
     const twilioPhoneNumber =
       body.message?.phoneNumber?.number ||
       body.message?.call?.phoneNumber?.number ||
-      body.phoneNumber?.number;
+      body.phoneNumber?.number ||
+      body.call?.phoneNumber?.number;
 
     if (!twilioPhoneNumber) {
-      console.log("Vapi config webhook: No twilioPhoneNumber found.");
-      return NextResponse.json({});
+      console.error("Vapi Webhook: No phone number found in request body.");
+      return NextResponse.json({ error: "No phone number" }, { status: 400 });
     }
 
     const normalizedPhone = twilioPhoneNumber.startsWith('+') ? twilioPhoneNumber : `+${twilioPhoneNumber}`;
 
-    // Find the business owner by the Twilio number called
+    // Find the User/Business associated with this Twilio number
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -35,64 +31,88 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      console.log(`Vapi config webhook: No user found for ${normalizedPhone}`);
-      return NextResponse.json({});
+      console.error(`Vapi Webhook: No business found for ${normalizedPhone}`);
+      // Return a default assistant so the call doesn't fail completely
+      return NextResponse.json({
+        assistant: {
+          firstMessage: "Hello, this is Solomon's Logic. How can I help you?",
+          model: {
+            messages: [{ role: "system", content: "You are an AI receptionist for Solomon's Logic." }]
+          }
+        }
+      });
     }
 
-    const businessName = user.businessName?.trim() || "our team";
-    console.log(`Vapi config webhook: Overriding config for ${businessName}`);
+    const businessName = user.businessName || "our team";
+    const now = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
 
-    // This response overrides the Assistant configuration dynamically
-    return NextResponse.json({
-      assistant: {
-        firstMessage: `Thank you for calling ${businessName}! How can I help you today?`,
-        model: {
-          messages: [
-            {
-              role: "system",
-              content: `Current date/time: {{now}}
+    console.log(`Vapi Webhook: Configuring assistant for ${businessName}`);
+
+    // This is the structure for a full Assistant Override
+    const assistantConfig = {
+      firstMessage: `Thank you for calling ${businessName}! How can I help you today?`,
+      model: {
+        provider: "openai",
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `Current date/time: ${now}
 Business timezone: America/New_York.
 
-You are a professional AI receptionist for ${businessName}.
+You are a professional AI receptionist for ${businessName}. Your job is to book appointments.
 
-Your primary goal is to assist callers by booking appointments into the system.
+Collect these details:
+1. Caller full name
+2. Caller phone number
+3. Appointment reason
+4. Appointment date and time
 
-### Required Information to Collect:
-1. **Full Name**: The caller's first and last name.
-2. **Phone Number**: The best contact number for the caller.
-3. **Reason**: A brief description of why they are booking.
-4. **Date and Time**: When they would like the appointment to occur.
-
-### Critical Rules:
-- **Tool Usage**: Do not invoke 'BookAppointment' until you have collected and confirmed all four required details.
-- **No Lookups**: Do not attempt to use any contact lookup or search tools.
-- **Phone Numbers**: If a caller provides a number, repeat it back to ensure accuracy before proceeding.
-- **Post-Booking**: Once 'BookAppointment' returns a success, inform the caller: "You're all set. Your appointment is booked for [Time]." Do not ask for their details again.
-
-### Tool Parameters for 'BookAppointment':
-- **twilioPhone**: Must be exactly "${normalizedPhone}".
-- **callerName**: The caller's full name.
-- **callerPhone**: The confirmed contact number.
-- **appointmentTitle**: The reason for the appointment.
-- **startTime**: The confirmed time in ISO 8601 format.
-- **durationMinutes**: Default to 30.
-- **notes**: A concise summary of the call.`,
-            },
-          ],
-        },
-        // IMPORTANT: Dynamically override tool parameters here
-        tools: [
-          {
-            name: "BookAppointment",
-            parameters: {
-              twilioPhone: normalizedPhone, // Set the twilioPhone dynamically
-            },
+Rules:
+- Repeat the phone number back to confirm.
+- Only call BookAppointment once all details are confirmed.
+- Use twilioPhone: "${normalizedPhone}" for the tool call.`,
           },
         ],
       },
-    });
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "BookAppointment",
+            description: "Books an appointment in the CRM.",
+            parameters: {
+              type: "object",
+              properties: {
+                twilioPhone: { type: "string", description: "The business phone number." },
+                callerName: { type: "string" },
+                callerPhone: { type: "string" },
+                appointmentTitle: { type: "string" },
+                startTime: { type: "string", description: "ISO 8601 format" },
+                durationMinutes: { type: "number", default: 30 },
+                notes: { type: "string" }
+              },
+              required: ["twilioPhone", "callerName", "callerPhone", "appointmentTitle", "startTime"]
+            }
+          },
+          server: {
+             url: "https://app.solomonslogic.com/api/appointments"
+          }
+        }
+      ]
+    };
+
+    // If this is an 'assistant-request' (Phone number level webhook)
+    if (body.message?.type === "assistant-request") {
+      return NextResponse.json({ assistant: assistantConfig });
+    }
+
+    // If this is a 'tool-call' (Assistant level webhook)
+    // We return the assistant override directly
+    return NextResponse.json({ assistant: assistantConfig });
+
   } catch (error) {
-    console.error("Vapi config webhook failed:", error);
-    return NextResponse.json({}, { status: 500 });
+    console.error("Vapi Webhook error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
