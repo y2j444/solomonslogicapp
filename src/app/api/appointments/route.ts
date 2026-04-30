@@ -370,17 +370,41 @@ export async function POST(request: Request) {
       });
     }
 
-    const appointment = await prisma.appointment.create({
-      data: {
-        title: appointmentTitle,
+    // Check if there is an existing future appointment for this contact
+    const existingUpcoming = await prisma.appointment.findFirst({
+      where: {
         contactId: contact.id,
-        startTime: correctedDate,
-        durationMinutes,
-        type: AppointmentType.PhoneCall,
-        notes,
-        ownerUserId: user.id,
+        startTime: { gte: new Date() },
       },
+      orderBy: { startTime: "asc" },
     });
+
+    let appointment;
+    if (existingUpcoming) {
+      // Update existing appointment (reschedule)
+      appointment = await prisma.appointment.update({
+        where: { id: existingUpcoming.id },
+        data: {
+          title: appointmentTitle,
+          startTime: correctedDate,
+          durationMinutes,
+          notes,
+        },
+      });
+    } else {
+      // Create new appointment
+      appointment = await prisma.appointment.create({
+        data: {
+          title: appointmentTitle,
+          contactId: contact.id,
+          startTime: correctedDate,
+          durationMinutes,
+          type: AppointmentType.PhoneCall,
+          notes,
+          ownerUserId: user.id,
+        },
+      });
+    }
 
     await prisma.callLog.create({
       data: {
@@ -388,7 +412,9 @@ export async function POST(request: Request) {
         callSid: `vapi_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         durationSeconds: 0,
         direction: CallDirection.Inbound,
-        aiSummary: "Call handled by Vapi booking webhook.",
+        aiSummary: existingUpcoming 
+          ? "Call handled by Vapi webhook (Rescheduled appointment)."
+          : "Call handled by Vapi webhook (Booked new appointment).",
         contactId: contact.id,
         appointmentCreatedId: appointment.id,
         appointmentStatus: CallAppointmentStatus.AppointmentCreated,
@@ -396,9 +422,10 @@ export async function POST(request: Request) {
       },
     });
 
+    const actionText = existingUpcoming ? "rescheduled" : "booked";
     return vapiResult(
       toolCallId,
-      `Appointment booked successfully for ${contact.fullName}.`
+      `Appointment ${actionText} successfully for ${contact.fullName}.`
     );
   }
 
