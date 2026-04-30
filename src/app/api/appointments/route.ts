@@ -208,6 +208,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = (await request.json()) as AppointmentPayload;
 
+  // DEBUG: log full Vapi payload so we can see exactly what's being sent
+  console.log("[appointments] RAW BODY:", JSON.stringify(body, null, 2));
+
   const toolCalls =
     body.message?.toolCallList ??
     body.message?.toolCalls ??
@@ -269,6 +272,15 @@ export async function POST(request: Request) {
   );
 
   if (isVapiToolCall) {
+    console.log("[appointments] EXTRACTED:", {
+      twilioPhone,
+      callerPhone,
+      callerName,
+      startTime,
+      normalizedTwilioPhone,
+      normalizedCallerPhone,
+    });
+
     if (!normalizedCallerPhone || !startTime) {
       return vapiResult(
         toolCallId,
@@ -286,6 +298,12 @@ export async function POST(request: Request) {
     }
 
     const appointmentDate = parseAppointmentDate(startTime);
+    console.log("[appointments] PARSED DATE:", {
+      raw: startTime,
+      parsed: appointmentDate.toISOString(),
+      now: new Date().toISOString(),
+      isPast: isPastAppointment(appointmentDate),
+    });
 
     if (isPastAppointment(appointmentDate)) {
       return vapiResult(
