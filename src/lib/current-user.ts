@@ -92,7 +92,7 @@ export async function getCurrentUserRecord() {
         firstName: "Demo",
         lastName: "User",
         businessName: "Solomons Logic LLC",
-        twilioPhone: process.env.TWILIO_PHONE_NUMBER ?? null,
+        twilioPhone: null,
       } as any,
     });
   } catch (err) {
