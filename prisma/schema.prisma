@@ -134,6 +134,7 @@ enum AppointmentType {
   Meeting
   Demo
   FollowUp
+  Blocked
 }
 
 enum CallDirection {

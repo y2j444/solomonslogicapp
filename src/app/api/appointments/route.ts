@@ -374,7 +374,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // Check if there is an existing future appointment for this contact
+    // Check if there is an existing future appointment for this contact (for rescheduling)
     const existingUpcoming = await prisma.appointment.findFirst({
       where: {
         contactId: contact.id,
@@ -382,6 +382,66 @@ export async function POST(request: Request) {
       },
       orderBy: { startTime: "asc" },
     });
+
+    // --- OVERLAP CHECK ---
+    // Check if the requested slot is already occupied by ANY appointment (including Blocked time)
+    const requestedEnd = new Date(correctedDate.getTime() + durationMinutes * 60000);
+    
+    const conflict = await prisma.appointment.findFirst({
+      where: {
+        ownerUserId: user.id,
+        id: existingUpcoming ? { not: existingUpcoming.id } : undefined, // Ignore the one we are rescheduling
+        OR: [
+          {
+            // Case 1: Existing appointment starts during the requested slot
+            startTime: {
+              gte: correctedDate,
+              lt: requestedEnd,
+            },
+          },
+          {
+            // Case 2: Existing appointment ends during the requested slot
+            // Since we don't store endTime, we check if startTime + durationMinutes is within range.
+            // Simplified check for common overlaps:
+            startTime: {
+              lt: correctedDate,
+            },
+            // Note: We can't easily do math in the 'where' clause without raw query, 
+            // but we can check if it started recently enough to still be happening.
+          },
+        ],
+      },
+    });
+
+    // For Case 2/3 (Requested slot starts during existing appointment), we fetch potential overlaps and check in JS
+    const potentialOverlaps = await prisma.appointment.findMany({
+      where: {
+        ownerUserId: user.id,
+        id: existingUpcoming ? { not: existingUpcoming.id } : undefined,
+        startTime: {
+          lt: requestedEnd,
+          gt: new Date(correctedDate.getTime() - 4 * 60 * 60 * 1000), // Check last 4 hours
+        }
+      }
+    });
+
+    const realConflict = potentialOverlaps.find(appt => {
+      const apptStart = appt.startTime.getTime();
+      const apptEnd = apptStart + appt.durationMinutes * 60000;
+      const reqStart = correctedDate.getTime();
+      const reqEnd = requestedEnd.getTime();
+      return reqStart < apptEnd && reqEnd > apptStart;
+    });
+
+    if (realConflict) {
+      const typeLabel = realConflict.type === AppointmentType.Blocked ? "blocked off" : "already booked";
+      return vapiResult(
+        toolCallId,
+        `Sorry, that time (${formatAppointmentDate(correctedDate)}) is ${typeLabel}. Please check for another available time with the caller.`,
+        400
+      );
+    }
+    // --- END OVERLAP CHECK ---
 
     let appointment;
     if (existingUpcoming) {
