@@ -12,6 +12,7 @@ const navItems = [
   { href: "/appointments", label: "Appointments", icon: "📅" },
   { href: "/call-logs", label: "Call Logs", icon: "📞" },
   { href: "/ai-receptionist", label: "AI Receptionist", icon: "🤖" },
+  { href: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
 type Profile = {

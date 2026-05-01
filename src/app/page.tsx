@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell, EmptyState, MetricCard, Surface } from "@/components/app-shell";
 
@@ -36,6 +37,10 @@ type DashboardData = {
   recentCalls: number;
   upcomingAppointments: AppointmentItem[];
   recentCallItems: CallItem[];
+  twilioPhone?: string | null;
+  businessPhone?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 };
 
 function formatDateTime(value: string) {
@@ -63,12 +68,21 @@ function formatDuration(seconds: number) {
 export default function Home() {
   const [stats, setStats] = useState<DashboardData | null>(null);
 
+  const router = useRouter();
+
   useEffect(() => {
     void fetch("/api/dashboard")
       .then((r) => r.json())
-      .then(setStats)
+      .then((data: DashboardData) => {
+        setStats(data);
+        
+        // Redirect to onboarding if critical profile info is missing
+        if (!data.businessPhone || !data.firstName || !data.lastName || !data.businessName) {
+          router.push("/onboarding");
+        }
+      })
       .catch(() => setStats(null));
-  }, []);
+  }, [router]);
 
   return (
     <AppShell
@@ -83,6 +97,23 @@ export default function Home() {
         </Link>
       }
     >
+      {stats && (!stats.businessPhone || !stats.firstName || !stats.lastName || !stats.businessName) && (
+        <div className="mb-6 flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-200">
+          <div className="flex items-center gap-3">
+            <span className="text-lg">ℹ️</span>
+            <div>
+              <span className="font-semibold">Complete your profile.</span> Add your contact info and business details in settings to activate your AI receptionist.
+            </div>
+          </div>
+          <Link
+            href="/settings"
+            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500"
+          >
+            Go to Settings
+          </Link>
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-3">
         <MetricCard label="Total Contacts" value={stats?.totalContacts ?? 0} icon="C" />
         <MetricCard label="Active Leads" value={stats?.totalLeads ?? 0} subvalue="0 won" icon="L" />

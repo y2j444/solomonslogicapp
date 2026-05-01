@@ -6,10 +6,13 @@ function normalizeEmail(email: string | null | undefined) {
 }
 
 export async function getCurrentUserRecord() {
+  console.log("[getCurrentUserRecord] Calling auth()...");
   const authResult = await auth();
   const clerkUserId = authResult.userId;
+  console.log("[getCurrentUserRecord] clerkUserId:", clerkUserId);
 
   if (clerkUserId) {
+    console.log("[getCurrentUserRecord] Finding user by clerkUserId...");
     const existingByClerkId = await prisma.user.findUnique({
       where: { clerkUserId },
     });

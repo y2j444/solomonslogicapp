@@ -38,6 +38,10 @@ Implemented API routes:
 Storage now uses Prisma models in `prisma/schema.prisma`.
 Auth now supports Clerk via `@clerk/nextjs` with a local demo fallback.
 
+## Onboarding
+For steps to onboard a new user or company, including Vapi and Twilio setup, see [ONBOARDING.md](./ONBOARDING.md).
+
+
 ## Phase 2 setup
 
 1. Copy `.env.example` to `.env.local`
