@@ -17,13 +17,21 @@ export async function provisionBusinessAccount(userId: string, areaCode?: string
   const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
   // 1. Search for a local number
-  const availableNumbers = await client.availablePhoneNumbers("US").local.list({
-    areaCode: parseInt(areaCode || "615", 10), // Default to Franklin/Nashville area if none provided
+  let availableNumbers = await client.availablePhoneNumbers("US").local.list({
+    areaCode: parseInt(areaCode || "615", 10),
     limit: 1,
   });
 
+  // Fallback: If no numbers found in area code, search the whole country
   if (availableNumbers.length === 0) {
-    throw new Error("No available phone numbers found for the area code");
+    console.log("[provisioning] No numbers in area code, falling back to general search...");
+    availableNumbers = await client.availablePhoneNumbers("US").local.list({
+      limit: 1,
+    });
+  }
+
+  if (availableNumbers.length === 0) {
+    throw new Error("No available phone numbers found in the US");
   }
 
   const twilioNumber = availableNumbers[0].phoneNumber;

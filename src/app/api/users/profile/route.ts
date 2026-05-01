@@ -50,16 +50,6 @@ export async function PATCH(req: Request) {
       } as any,
     });
 
-    // Auto-provision if no phone exists yet
-    if (!updated.twilioPhone && updated.businessPhone) {
-      try {
-        const { provisionBusinessAccount } = await import("@/lib/provisioning");
-        await provisionBusinessAccount(updated.id);
-      } catch (err) {
-        console.error("Auto-provisioning failed:", err);
-      }
-    }
-
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Profile PATCH failed:", error);
