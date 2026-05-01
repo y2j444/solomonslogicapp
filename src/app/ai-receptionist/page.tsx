@@ -164,6 +164,8 @@ export default function AiReceptionistPage() {
             </div>
           )}
         </div>
+      </div>
+
       <Surface className="mt-12 p-6 border-blue-500/10 bg-blue-500/[0.02]">
         <h4 className="text-xs font-bold text-blue-400 uppercase mb-3">Vapi Webhook Configuration</h4>
         <p className="text-sm text-zinc-400 mb-4">
