@@ -41,6 +41,7 @@ type DashboardData = {
   businessPhone?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  businessName?: string | null;
 };
 
 function formatDateTime(value: string) {

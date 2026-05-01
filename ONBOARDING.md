@@ -14,33 +14,35 @@ When a new user (a company owner) signs up with their email, the following happe
 4.  **Profile Update**:
     *   The user fills out the **Onboarding** form (First Name, Last Name, Business Name, and Business Phone Number).
     *   Once submitted, they are redirected to their Dashboard.
-    *   Our system (admin) then provisions a dedicated **AI Receptionist Number** (Twilio) for them.
 
 ---
 
-## 2. Service Activation (System Level)
+## 2. Service Activation (Automated)
 
-Since the company doesn't manage their own Twilio account, the activation process is handled by the Solomon's Logic platform:
+Once the user provides their business details, the system handles the rest:
 
-1.  **AI Number Assignment**: An admin assigns a Twilio number to the user's `twilioPhone` field in the database.
-2.  **Webhook Sync**: The system ensures the Twilio number is pointed to:
-    *   **SMS**: `https://your-app-domain.com/api/webhooks/twilio/sms`
-    *   **Voice**: `https://your-app-domain.com/api/webhooks/twilio/call`
-3.  **Vapi Connection**: The assigned number is imported into Vapi and linked to the global **Assistant** configuration.
+1.  **AI Number Provisioning**: The system automatically searches for and purchases a new Twilio number for the user's business.
+2.  **Vapi Integration**: The new number is automatically imported into Vapi and linked to the AI Assistant.
+3.  **Ready to Use**: The user's **AI Receptionist Number** will appear on their dashboard and settings page.
 
 ---
 
-## 3. How the AI Receptionist Works
+## 3. Using a Personal/Existing Number
 
-1.  **Call Handling**: When a customer calls the assigned **AI Number**, Vapi answers and handles the conversation using the user's **Business Name** for context.
+If you want the AI to answer calls to your **personal cell phone** or an **existing business line**, you don't need to change your number. Simply set up **Conditional Call Forwarding**.
+
+### How to set up Call Forwarding:
+1.  Find your **AI Receptionist Number** in your Settings.
+2.  On your personal phone, set up forwarding for missed calls:
+    *   **Verizon/Sprint**: Dial `*71` + `[Your AI Number]` (e.g., `*716151234567`) and press call.
+    *   **AT&T/T-Mobile**: Dial `**61*` + `[Your AI Number]` + `#` and press call.
+3.  **Test it**: Call your personal number from a different phone and let it ring. The AI should answer after a few seconds!
+
+---
+
+## 4. How the AI Receptionist Works
+
+1.  **Call Handling**: When a customer calls the assigned **AI Number** (or is forwarded there), Vapi answers using the user's **Business Name** for context.
 2.  **Booking**: If the caller wants to schedule an appointment, Vapi calls the `/api/appointments` endpoint. 
-    *   The system uses the incoming `phoneNumber` from Vapi to match the `twilioPhone` field in our database, identifying exactly which business the call belongs to.
+    *   The system identifies the business using the incoming phone number.
 3.  **Record Creation**: The CRM automatically creates a **Contact**, logs the **Call**, and schedules the **Appointment** under the correct company account.
-
----
-
-## 4. Testing & Verification
-
-*   **Settings Page**: The user can see their assigned **AI Receptionist Number** in their settings once it has been provisioned.
-*   **Call Logs**: All interactions are visible in the `/call-logs` page for transparency and follow-up.
-*   **Live Demo**: Admins can test the flow using the Vapi dashboard or by calling the assigned AI number directly.
