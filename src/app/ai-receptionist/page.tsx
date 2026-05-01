@@ -170,8 +170,8 @@ export default function AiReceptionistPage() {
           To receive call logs and transcripts, copy the URL below and paste it into the <strong>Server URL</strong> field in your Vapi Assistant settings.
         </p>
         <div className="flex items-center gap-2 rounded-lg bg-black/40 p-3 font-mono text-[11px] text-zinc-300 border border-white/5 overflow-x-auto whitespace-nowrap">
-          <span className="text-blue-400">POST</span>
-          {typeof window !== "undefined" ? window.location.origin : "https://app.solomonslogic.com"}/api/webhooks/vapi/report
+          <span className="text-blue-400 font-bold mr-2">POST</span>
+          {`${typeof window !== "undefined" ? window.location.origin : "https://app.solomonslogic.com"}/api/webhooks/vapi/report`}
         </div>
       </Surface>
     </AppShell>
