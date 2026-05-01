@@ -44,7 +44,7 @@ export async function PATCH(req: Request) {
         firstName: body.firstName ?? user.firstName,
         lastName: body.lastName ?? user.lastName,
         businessName: body.businessName ?? user.businessName,
-        businessPhone: body.businessPhone ?? user.businessPhone,
+        businessPhone: body.businessPhone ?? (user as any).businessPhone,
         twilioPhone: body.twilioPhone ?? user.twilioPhone,
       },
     });
