@@ -83,7 +83,7 @@ export async function GET() {
       }),
     ]);
 
-    return NextResponse.json({
+    return Response.json({
       totalContacts,
       totalLeads,
       totalAppointments,
@@ -91,11 +91,11 @@ export async function GET() {
       recentCalls,
       upcomingAppointments,
       recentCallItems,
-      twilioPhone: user.twilioPhone,
+      twilioPhone: (user as any).twilioPhone,
       businessPhone: (user as any).businessPhone,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      businessName: user.businessName,
+      firstName: (user as any).firstName,
+      lastName: (user as any).lastName,
+      businessName: (user as any).businessName,
     });
   } catch (error) {
     console.error("[api/dashboard] FAILED:", error);

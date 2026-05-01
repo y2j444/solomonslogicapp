@@ -6,27 +6,24 @@ function normalizeEmail(email: string | null | undefined) {
 }
 
 export async function getCurrentUserRecord() {
-  console.log("[getCurrentUserRecord] START (BYPASS AUTH)");
+  console.log("[getCurrentUserRecord] START");
   try {
-    // const authResult = await auth();
-    // const clerkUserId = authResult.userId;
-    const clerkUserId = "user_2lV8P9N9S8F8B8C8D8E8F8G8H8I"; // Dummy ID
-    console.log("[getCurrentUserRecord] Using dummy clerkUserId:", clerkUserId);
+    const authResult = await auth();
+    const clerkUserId = authResult.userId;
+    console.log("[getCurrentUserRecord] clerkUserId:", clerkUserId);
 
     if (clerkUserId) {
-      console.log("[getCurrentUserRecord] Checking DB for clerkUserId:", clerkUserId);
+      console.log("[getCurrentUserRecord] Finding user in DB...");
       const existingByClerkId = await prisma.user.findUnique({
         where: { clerkUserId },
       });
 
       if (existingByClerkId) {
-        console.log("[getCurrentUserRecord] Found existing user by clerkUserId");
         return existingByClerkId;
       }
 
-      console.log("[getCurrentUserRecord] Not found in DB, using fallback clerk data...");
-      // const clerkUser = await currentUser();
-      const clerkUser = null;
+      console.log("[getCurrentUserRecord] User not found, fetching Clerk data...");
+      const clerkUser = await currentUser();
       const clerkEmail = normalizeEmail(
         clerkUser?.primaryEmailAddress?.emailAddress
       );
@@ -35,24 +32,23 @@ export async function getCurrentUserRecord() {
       const clerkLastName = clerkUser?.lastName ?? null;
 
       if (clerkEmail) {
-        console.log("[getCurrentUserRecord] Checking DB for clerkEmail:", clerkEmail);
         const existingByEmail = await prisma.user.findUnique({
           where: { email: clerkEmail },
         });
 
         if (existingByEmail) {
-          console.log("[getCurrentUserRecord] Found existing user by email, updating with clerkUserId...");
+          console.log("[getCurrentUserRecord] Found existing user by email, syncing clerkUserId...");
           return prisma.user.update({
             where: { id: existingByEmail.id },
             data: {
               clerkUserId,
               firstName: existingByEmail.firstName ?? clerkFirstName,
               lastName: existingByEmail.lastName ?? clerkLastName,
-            },
+            } as any,
           });
         }
 
-        console.log("[getCurrentUserRecord] Creating new user for email:", clerkEmail);
+        console.log("[getCurrentUserRecord] Creating new user record...");
         return prisma.user.create({
           data: {
             clerkUserId,
@@ -62,11 +58,11 @@ export async function getCurrentUserRecord() {
             businessName: clerkUser?.publicMetadata?.businessName
               ? String(clerkUser.publicMetadata.businessName)
               : "New Business",
-          },
+          } as any,
         });
       }
 
-      console.log("[getCurrentUserRecord] No clerkEmail found, creating generic user record");
+      console.log("[getCurrentUserRecord] Creating generic user record...");
       return prisma.user.create({
         data: {
           clerkUserId,
@@ -74,22 +70,21 @@ export async function getCurrentUserRecord() {
           firstName: clerkFirstName,
           lastName: clerkLastName,
           businessName: "New Business",
-        },
+        } as any,
       });
     }
 
-    console.log("[getCurrentUserRecord] No clerkUserId, checking for demo user...");
     const fallbackEmail = "demo@solomonslogic.local";
+    console.log("[getCurrentUserRecord] No clerkUserId, checking fallback:", fallbackEmail);
+    
     const fallback = await prisma.user.findUnique({
       where: { email: fallbackEmail },
     });
 
     if (fallback) {
-      console.log("[getCurrentUserRecord] Returning demo user");
       return fallback;
     }
 
-    console.log("[getCurrentUserRecord] Creating demo user record");
     return prisma.user.create({
       data: {
         email: fallbackEmail,
@@ -97,7 +92,7 @@ export async function getCurrentUserRecord() {
         lastName: "User",
         businessName: "Solomons Logic LLC",
         twilioPhone: process.env.TWILIO_PHONE_NUMBER ?? null,
-      },
+      } as any,
     });
   } catch (err) {
     console.error("[getCurrentUserRecord] FATAL ERROR:", err);

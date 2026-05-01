@@ -41,12 +41,12 @@ export async function PATCH(req: Request) {
     const updated = await prisma.user.update({
       where: { id: user.id },
       data: {
-        firstName: body.firstName ?? user.firstName,
-        lastName: body.lastName ?? user.lastName,
-        businessName: body.businessName ?? user.businessName,
+        firstName: body.firstName ?? (user as any).firstName,
+        lastName: body.lastName ?? (user as any).lastName,
+        businessName: body.businessName ?? (user as any).businessName,
         businessPhone: body.businessPhone ?? (user as any).businessPhone,
-        twilioPhone: body.twilioPhone ?? user.twilioPhone,
-      },
+        twilioPhone: body.twilioPhone ?? (user as any).twilioPhone,
+      } as any,
     });
 
     return NextResponse.json(updated);
