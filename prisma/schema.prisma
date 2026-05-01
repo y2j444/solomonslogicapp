@@ -88,6 +88,7 @@ model CallLog {
   appointmentCreatedId String?
   appointmentStatus    CallAppointmentStatus    @default(PendingReview)
   calledAt             DateTime                 @default(now())
+  transcript           Json?
   ownerUserId          String
   owner                User                     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
 
