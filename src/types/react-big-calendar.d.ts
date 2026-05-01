@@ -1,3 +1,19 @@
+declare module "react-big-calendar/lib/addons/dragAndDrop" {
+  import { CalendarProps } from "react-big-calendar";
+  import { ComponentType } from "react";
+  
+  export interface withDragAndDropProps {
+    onEventDrop?: (args: any) => void;
+    onEventResize?: (args: any) => void;
+    resizable?: boolean;
+    selectable?: boolean;
+  }
+
+  export default function withDragAndDrop<TEvent extends object = object>(
+    calendar: ComponentType<CalendarProps>
+  ): ComponentType<CalendarProps & withDragAndDropProps>;
+}
+
 declare module "react-big-calendar" {
   import { ComponentType, ReactNode } from "react";
 
