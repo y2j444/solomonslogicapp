@@ -160,7 +160,11 @@ export function AppShell({
           </div>
 
           <div className="p-4 md:p-5">
-            {isSignedIn ? (
+            {!isUserLoaded ? (
+              <div className="flex h-[60vh] items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#355cc9] border-t-transparent" />
+              </div>
+            ) : isSignedIn ? (
               children
             ) : (
               <div className="flex h-[60vh] flex-col items-center justify-center text-center">

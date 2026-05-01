@@ -164,7 +164,16 @@ export default function AiReceptionistPage() {
             </div>
           )}
         </div>
-      </div>
+      <Surface className="mt-12 p-6 border-blue-500/10 bg-blue-500/[0.02]">
+        <h4 className="text-xs font-bold text-blue-400 uppercase mb-3">Vapi Webhook Configuration</h4>
+        <p className="text-sm text-zinc-400 mb-4">
+          To receive call logs and transcripts, copy the URL below and paste it into the <strong>Server URL</strong> field in your Vapi Assistant settings.
+        </p>
+        <div className="flex items-center gap-2 rounded-lg bg-black/40 p-3 font-mono text-[11px] text-zinc-300 border border-white/5 overflow-x-auto whitespace-nowrap">
+          <span className="text-blue-400">POST</span>
+          {typeof window !== "undefined" ? window.location.origin : "https://app.solomonslogic.com"}/api/webhooks/vapi/report
+        </div>
+      </Surface>
     </AppShell>
   );
 }
