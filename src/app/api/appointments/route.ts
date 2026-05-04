@@ -487,6 +487,20 @@ export async function POST(request: Request) {
     });
 
     const actionText = existingUpcoming ? "rescheduled" : "booked";
+
+    // --- SEND SMS CONFIRMATION ---
+    try {
+      const { sendTwilioSms } = await import("@/lib/twilio-sms");
+      const timeStr = formatAppointmentDate(correctedDate);
+      const businessName = user.businessName || "our business";
+      const message = `Hi ${contact.fullName}, your appointment has been ${actionText} for ${timeStr} with ${businessName}. See you then!`;
+      
+      await sendTwilioSms(normalizedCallerPhone, message);
+    } catch (smsErr) {
+      console.error("[appointments] Failed to send SMS confirmation:", smsErr);
+    }
+    // --- END SMS CONFIRMATION ---
+
     return vapiResult(
       toolCallId,
       `Appointment ${actionText} successfully for ${contact.fullName}.`
