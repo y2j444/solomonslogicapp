@@ -8,5 +8,5 @@ process.env.DEBUG = "livekit:*";
 console.log("Launching Solomon Agent...");
 
 cli.runApp({
-  agent: "agent/receptionist.ts",
+  agent: "agent/receptionist.js",
 });
