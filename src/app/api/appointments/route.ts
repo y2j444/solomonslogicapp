@@ -490,12 +490,12 @@ export async function POST(request: Request) {
 
     // --- SEND SMS CONFIRMATION ---
     try {
-      const { sendTwilioSms } = await import("@/lib/twilio-sms");
+      const { sendTelnyxSms } = await import("@/lib/telnyx");
       const timeStr = formatAppointmentDate(correctedDate);
       const businessName = user.businessName || "our business";
       const message = `Hi ${contact.fullName}, your appointment has been ${actionText} for ${timeStr} with ${businessName}. See you then!`;
       
-      await sendTwilioSms(normalizedCallerPhone, message);
+      await sendTelnyxSms(normalizedCallerPhone, message);
     } catch (smsErr) {
       console.error("[appointments] Failed to send SMS confirmation:", smsErr);
     }
