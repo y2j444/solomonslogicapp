@@ -18,7 +18,7 @@ export default defineAgent({
 
     const businessName = "Solomon's Logic";
 
-    const agent = new voice.VoicePipelineAgent({
+    const agent = new voice.Agent({
       stt: new deepgram.STT(),
       tts: new cartesia.TTS(),
       llm: new openai.LLM({
