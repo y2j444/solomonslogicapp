@@ -4,7 +4,7 @@ import {
   type JobContext 
 } from "@livekit/agents";
 import * as openai from "@livekit/agents-plugin-openai";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../src/lib/prisma";
 
 export default defineAgent((ctx: JobContext) => {
   return {
