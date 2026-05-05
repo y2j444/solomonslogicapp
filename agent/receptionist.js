@@ -11,7 +11,7 @@ export default defineAgent({
     console.log("--- Received Job Request ---");
     await req.accept();
   },
-  entrypoint: async (ctx) => {
+  entry: async (ctx) => {
     console.log("--- Job Started ---");
     await ctx.connect();
     console.log("Connected to room!");
