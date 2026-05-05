@@ -8,13 +8,11 @@ import * as deepgram from "@livekit/agents-plugin-deepgram";
 import * as cartesia from "@livekit/agents-plugin-cartesia";
 import { prisma } from "../src/lib/prisma";
 
+// Explicitly naming the agent 'solomon-agent'
 export default defineAgent(async (ctx: JobContext) => {
-  console.log("Incoming call detected...");
-  
+  console.log("Call received! Connecting...");
   await ctx.connect();
-  console.log("Agent joined the room!");
-
-  // Wrap the DB lookup in a try/catch so it never blocks the call
+  
   let businessName = "Solomon's Logic";
   try {
     const calledNumber = ctx.room.metadata || process.env.TELNYX_PHONE_NUMBER; 
@@ -28,7 +26,7 @@ export default defineAgent(async (ctx: JobContext) => {
     });
     if (user?.businessName) businessName = user.businessName;
   } catch (e) {
-    console.error("DB lookup failed, using default name:", e);
+    console.error("DB error:", e);
   }
 
   const agent = new VoicePipelineAgent({
@@ -36,14 +34,12 @@ export default defineAgent(async (ctx: JobContext) => {
     tts: new cartesia.TTS(),
     llm: new openai.LLM({
       model: "gpt-4o-mini",
-      instructions: `You are Solomon, the AI receptionist for ${businessName}. Warm and professional.`,
+      instructions: `You are Solomon, the AI receptionist for ${businessName}.`,
     }),
   });
 
   agent.start(ctx.room);
-  
-  // Explicitly greet the caller
-  setTimeout(() => {
-    agent.say(`Hi, thanks for calling ${businessName}, this is Solomon. How can I help you today?`);
-  }, 500);
+  agent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
+}, {
+  name: "solomon-agent" // Setting the name here
 });
