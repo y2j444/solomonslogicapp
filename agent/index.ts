@@ -1,4 +1,5 @@
-import "dotenv/config";
+import * as dotenv from "dotenv";
+dotenv.config({ override: true });
 import { cli } from "@livekit/agents";
 
 // Enable detailed debug logging
