@@ -16,7 +16,9 @@ model User {
   businessName String?
   businessPhone String?
   joinedAt     DateTime      @default(now())
-  AIPhone  String?       @unique
+  AIPhone      String?       @unique
+  knowledgeBase String?      @db.Text
+  callHandlingRules String?  @db.Text
   contacts     Contact[]
   leads        Lead[]
   appointments Appointment[]
