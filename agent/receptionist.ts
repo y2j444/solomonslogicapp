@@ -40,6 +40,4 @@ export default defineAgent(async (ctx: JobContext) => {
 
   agent.start(ctx.room);
   agent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
-}, {
-  name: "solomon-agent"
 });
