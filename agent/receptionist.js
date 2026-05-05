@@ -23,12 +23,13 @@ export default defineAgent({
       tts: new cartesia.TTS(),
       llm: new openai.LLM({
         model: "gpt-4o-mini",
-        instructions: `You are Solomon, the AI receptionist for ${businessName}.`,
       }),
+      instructions: `You are Solomon, the AI receptionist for ${businessName}.`
     });
 
-    agent.start(ctx.room);
-    console.log("Agent started!");
-    agent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
+    const session = new voice.AgentSession({ agent });
+    await session.start({ agent, room: ctx.room });
+    console.log("Agent session started!");
+    session.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
   },
 });
