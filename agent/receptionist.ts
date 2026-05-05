@@ -1,6 +1,6 @@
 import { 
   defineAgent, 
-  VoicePipelineAgent, 
+  pipeline, // In your version, it's inside 'pipeline'
   type JobContext 
 } from "@livekit/agents";
 import * as openai from "@livekit/agents-plugin-openai";
@@ -8,7 +8,6 @@ import * as deepgram from "@livekit/agents-plugin-deepgram";
 import * as cartesia from "@livekit/agents-plugin-cartesia";
 import { prisma } from "../src/lib/prisma";
 
-// Explicitly naming the agent 'solomon-agent'
 export default defineAgent(async (ctx: JobContext) => {
   console.log("Call received! Connecting...");
   await ctx.connect();
@@ -29,7 +28,8 @@ export default defineAgent(async (ctx: JobContext) => {
     console.error("DB error:", e);
   }
 
-  const agent = new VoicePipelineAgent({
+  // Using pipeline.VoicePipelineAgent for compatibility
+  const agent = new pipeline.VoicePipelineAgent({
     stt: new deepgram.STT(),
     tts: new cartesia.TTS(),
     llm: new openai.LLM({
@@ -41,5 +41,5 @@ export default defineAgent(async (ctx: JobContext) => {
   agent.start(ctx.room);
   agent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
 }, {
-  name: "solomon-agent" // Setting the name here
+  name: "solomon-agent"
 });
