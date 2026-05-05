@@ -9,7 +9,7 @@ import * as deepgram from "@livekit/agents-plugin-deepgram";
 import * as cartesia from "@livekit/agents-plugin-cartesia";
 import { prisma } from "../src/lib/prisma";
 
-const agentDef = defineAgent({
+export default defineAgent({
   request_handler: async (req: JobRequest) => {
     console.log("--- Received Job Request ---");
     console.log("Job ID:", req.job.id);
@@ -29,43 +29,20 @@ const agentDef = defineAgent({
     }
 
     let businessName = "Solomon's Logic";
-    let knowledgeBase = "No specific knowledge base provided.";
-    let callHandlingRules = "Help the user by answering their questions.";
-
     try {
-      // Since LiveKit UI rejects metadata, we'll read it from the Room Prefix!
-      // Example Room Name: "16157163328-xxxyyy" -> prefix is "16157163328"
-      const roomPrefix = ctx.room.name.split(/[-_]/)[0];
-      
-      let rawNumber = ctx.room.metadata || roomPrefix || process.env.TELNYX_PHONE_NUMBER || "";
-      if (typeof rawNumber === 'object') {
-        rawNumber = JSON.stringify(rawNumber);
-      }
-      
-      const calledNumber = rawNumber.trim();
-      const withPlus = calledNumber.startsWith('+') ? calledNumber : '+' + calledNumber;
-      const withoutPlus = calledNumber.replace('+', '');
-
-      console.log("Looking up business for number:", calledNumber, "or", withPlus);
-      
+      const calledNumber = ctx.room.metadata || process.env.TELNYX_PHONE_NUMBER;
+      console.log("Looking up business for number:", calledNumber);
       const user = await prisma.user.findFirst({
         where: {
           OR: [
             { AIPhone: calledNumber },
-            { AIPhone: withPlus },
-            { AIPhone: withoutPlus },
+            { AIPhone: calledNumber?.replace("+1", "") },
           ],
         },
       });
       if (user?.businessName) {
         businessName = user.businessName;
         console.log("Found business name:", businessName);
-      }
-      if (user?.knowledgeBase) {
-        knowledgeBase = user.knowledgeBase;
-      }
-      if (user?.callHandlingRules) {
-        callHandlingRules = user.callHandlingRules;
       }
     } catch (e) {
       console.error("DB error during lookup:", e);
@@ -76,15 +53,7 @@ const agentDef = defineAgent({
       tts: new cartesia.TTS(),
       llm: new openai.LLM({
         model: "gpt-4o-mini",
-        instructions: `You are the AI receptionist for ${businessName}.
-        
-Business Knowledge:
-${knowledgeBase}
-
-Call Handling Rules:
-${callHandlingRules}
-
-Your goal is to be helpful and professional, using the knowledge above to answer questions and following the rules strictly. Keep your responses concise.`,
+        instructions: `You are Solomon, the AI receptionist for ${businessName}. Your goal is to be helpful and professional.`,
       }),
     });
 
@@ -93,5 +62,3 @@ Your goal is to be helpful and professional, using the knowledge above to answer
     agent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
   },
 });
-
-export default agentDef;
