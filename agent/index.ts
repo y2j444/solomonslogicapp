@@ -9,7 +9,7 @@ console.log("Launching Solomon Agent with Debug Mode...");
 console.log("Current Directory:", process.cwd());
 console.log("Agent Path:", path.join(process.cwd(), "agent/receptionist.ts"));
 
-// Using the file path method so Dev Mode (auto-reload) works correctly
+// Using a relative path for the agent file is often more reliable on Windows
 cli.runApp({
-  agent: path.join(process.cwd(), "agent/receptionist.ts"),
+  agent: "./agent/receptionist.ts",
 });
