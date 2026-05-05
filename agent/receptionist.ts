@@ -9,7 +9,7 @@ import * as deepgram from "@livekit/agents-plugin-deepgram";
 import * as cartesia from "@livekit/agents-plugin-cartesia";
 import { prisma } from "../src/lib/prisma";
 
-export default defineAgent({
+const agentDef = defineAgent({
   request_handler: async (req: JobRequest) => {
     console.log("--- Received Job Request ---");
     console.log("Job ID:", req.job.id);
@@ -93,3 +93,5 @@ Your goal is to be helpful and professional, using the knowledge above to answer
     agent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
   },
 });
+
+export default agentDef;
