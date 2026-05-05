@@ -1,6 +1,6 @@
 import { 
   defineAgent, 
-  pipeline, // In your version, it's inside 'pipeline'
+  voice, 
   type JobContext 
 } from "@livekit/agents";
 import * as openai from "@livekit/agents-plugin-openai";
@@ -28,8 +28,8 @@ export default defineAgent(async (ctx: JobContext) => {
     console.error("DB error:", e);
   }
 
-  // Using pipeline.VoicePipelineAgent for compatibility
-  const agent = new pipeline.VoicePipelineAgent({
+  // Correct path for your version: voice.VoicePipelineAgent
+  const agent = new voice.VoicePipelineAgent({
     stt: new deepgram.STT(),
     tts: new cartesia.TTS(),
     llm: new openai.LLM({
