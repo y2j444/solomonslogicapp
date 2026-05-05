@@ -16,7 +16,7 @@ model User {
   businessName String?
   businessPhone String?
   joinedAt     DateTime      @default(now())
-  twilioPhone  String?       @unique
+  AIPhone  String?       @unique
   contacts     Contact[]
   leads        Lead[]
   appointments Appointment[]

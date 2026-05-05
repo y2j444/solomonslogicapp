@@ -37,7 +37,7 @@ type DashboardData = {
   recentCalls: number;
   upcomingAppointments: AppointmentItem[];
   recentCallItems: CallItem[];
-  twilioPhone?: string | null;
+  AIPhone?: string | null;
   businessPhone?: string | null;
   firstName?: string | null;
   lastName?: string | null;

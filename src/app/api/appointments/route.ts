@@ -42,7 +42,7 @@ type AppointmentPayload = {
   toolCallList?: VapiToolCall[];
   toolCalls?: VapiToolCall[];
   toolCallId?: string;
-  twilioPhone?: string;
+  AIPhone?: string;
   callerPhone?: string;
   callerName?: string;
   appointmentTitle?: string;
@@ -249,7 +249,7 @@ export async function POST(request: Request) {
     "";
 
   // Business phone: ALWAYS use what Vapi sends in the payload — never trust the AI's args for this.
-  const twilioPhone = businessPhoneFromPayload || String(body.twilioPhone ?? "").trim();
+  const AIPhone = businessPhoneFromPayload || String(body.AIPhone ?? "").trim();
   // Caller phone/name: prefer AI args (spoken), fall back to Vapi payload
   const callerPhone = (String(args.callerPhone ?? "").trim() || String(body.callerPhone ?? "").trim() || callerPhoneFromPayload);
   const callerName = (String(args.callerName ?? "").trim() || String(body.callerName ?? "").trim() || callerNameFromPayload);
@@ -265,7 +265,7 @@ export async function POST(request: Request) {
   const durationMinutes =
     Number(args.durationMinutes ?? body.durationMinutes ?? 30) || 30;
 
-  const normalizedTwilioPhone = normalizeUsPhone(twilioPhone);
+  const normalizedTwilioPhone = normalizeUsPhone(AIPhone);
   // Normalize each caller phone candidate independently; take first valid result.
   // This handles the AI sending just "+1" (country code only) which would normalize to "".
   const normalizedCallerPhone =
@@ -278,13 +278,13 @@ export async function POST(request: Request) {
       body.message ||
       body.toolCallList ||
       body.toolCalls ||
-      twilioPhone ||
+      AIPhone ||
       normalizedCallerPhone
   );
 
   if (isVapiToolCall) {
     console.log("[appointments] EXTRACTED:", {
-      twilioPhone,
+      AIPhone,
       callerPhone,
       callerName,
       startTime,
@@ -342,7 +342,7 @@ export async function POST(request: Request) {
     // Look up business by phone number. If we have it from the payload, use it;
     // otherwise fall back to finding by caller phone (for single-tenant setups).
     let user = normalizedTwilioPhone
-      ? await prisma.user.findFirst({ where: { twilioPhone: normalizedTwilioPhone } })
+      ? await prisma.user.findFirst({ where: { AIPhone: normalizedTwilioPhone } })
       : null;
 
     if (!user) {

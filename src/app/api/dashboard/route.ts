@@ -92,7 +92,7 @@ export async function GET() {
       recentCalls,
       upcomingAppointments,
       recentCallItems,
-      twilioPhone: (user as any).twilioPhone,
+      AIPhone: (user as any).AIPhone,
       businessPhone: (user as any).businessPhone,
       firstName: (user as any).firstName,
       lastName: (user as any).lastName,

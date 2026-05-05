@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 async function main() {
   const updated = await prisma.user.updateMany({
     where: { email: "michael.janico@solomonslogic.com" },
-    data: { twilioPhone: "+18556744026" },
+    data: { AIPhone: "+18556744026" },
   });
   console.log("Updated rows:", updated.count);
 }

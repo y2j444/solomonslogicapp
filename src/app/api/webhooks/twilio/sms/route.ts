@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const user = await prisma.user.findFirst({ where: { twilioPhone: to } });
+  const user = await prisma.user.findFirst({ where: { AIPhone: to } });
   if (!user) {
     return new Response(
       smsResponse("This number is not configured to a business profile yet."),

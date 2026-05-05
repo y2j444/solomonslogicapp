@@ -1,6 +1,6 @@
-import { 
-  defineAgent, 
-  voice, 
+import {
+  defineAgent,
+  voice,
   type JobContext,
   type JobRequest
 } from "@livekit/agents";
@@ -19,7 +19,7 @@ export default defineAgent({
   entrypoint: async (ctx: JobContext) => {
     console.log("--- Job Started ---");
     console.log("Connecting to room:", ctx.room.name);
-    
+
     try {
       await ctx.connect();
       console.log("Connected to room!");
@@ -30,13 +30,13 @@ export default defineAgent({
 
     let businessName = "Solomon's Logic";
     try {
-      const calledNumber = ctx.room.metadata || process.env.TELNYX_PHONE_NUMBER; 
+      const calledNumber = ctx.room.metadata || process.env.TELNYX_PHONE_NUMBER;
       console.log("Looking up business for number:", calledNumber);
       const user = await prisma.user.findFirst({
         where: {
           OR: [
-            { twilioPhone: calledNumber },
-            { twilioPhone: calledNumber?.replace("+1", "") },
+            { AIPhone: calledNumber },
+            { AIPhone: calledNumber?.replace("+1", "") },
           ],
         },
       });

@@ -28,8 +28,8 @@ export async function POST(req: Request) {
     const owner = await prisma.user.findFirst({
       where: {
         OR: [
-          { twilioPhone: businessPhone },
-          { twilioPhone: businessPhone.replace("+1", "") },
+          { AIPhone: businessPhone },
+          { AIPhone: businessPhone.replace("+1", "") },
         ],
       },
     });

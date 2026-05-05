@@ -20,7 +20,7 @@ async function main() {
       console.log('--- User Profile ---');
       console.log(`Email: ${user.email}`);
       console.log(`Business Name: ${user.businessName}`);
-      console.log(`Twilio Phone: ${user.twilioPhone}`);
+      console.log(`Twilio Phone: ${user.AIPhone}`);
       console.log(`Contacts: ${user.contacts.length}`);
       console.log(`Leads: ${user.leads.length}`);
       console.log(`Appointments: ${user.appointments.length}`);

@@ -8,7 +8,7 @@ type Profile = {
   lastName: string | null;
   businessName: string | null;
   businessPhone: string | null;
-  twilioPhone: string | null;
+  AIPhone: string | null;
   email: string;
 };
 
@@ -152,9 +152,9 @@ export default function SettingsPage() {
           <div className="mt-4 space-y-4">
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">AI Phone Number</span>
-              {profile?.twilioPhone ? (
+              {profile?.AIPhone ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-mono text-emerald-400">{profile.twilioPhone}</span>
+                  <span className="text-lg font-mono text-emerald-400">{profile.AIPhone}</span>
                   <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-500 uppercase">Active</span>
                 </div>
               ) : (

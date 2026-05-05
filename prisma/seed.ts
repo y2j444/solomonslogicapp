@@ -15,7 +15,7 @@ type SeedUser = {
   firstName: string;
   lastName: string;
   businessName: string;
-  twilioPhone: string;
+  AIPhone: string;
 };
 
 // ... existing code ...
@@ -32,13 +32,13 @@ async function upsertUser(user: SeedUser) {
         firstName: user.firstName,
         lastName: user.lastName,
         businessName: user.businessName,
-        twilioPhone: user.twilioPhone,
+        AIPhone: user.AIPhone,
       },
     });
   }
 
   const existingByTwilioPhone = await prisma.user.findUnique({
-    where: { twilioPhone: user.twilioPhone },
+    where: { AIPhone: user.AIPhone },
   });
 
   if (existingByTwilioPhone) {
@@ -253,7 +253,7 @@ async function main() {
     firstName: "Michael",
     lastName: "Janico",
     businessName: "Solomon's Logic",
-    twilioPhone: "+15550000001",
+    AIPhone: "+15550000001",
   });
 
   const brightCareUser = await upsertUser({
@@ -261,7 +261,7 @@ async function main() {
     firstName: "Sarah",
     lastName: "Mills",
     businessName: "BrightCare Dental",
-    twilioPhone: "+15550000002",
+    AIPhone: "+15550000002",
   });
 
   const peakFlowUser = await upsertUser({
@@ -269,7 +269,7 @@ async function main() {
     firstName: "Daniel",
     lastName: "Reed",
     businessName: "PeakFlow Plumbing",
-    twilioPhone: "+15550000003",
+    AIPhone: "+15550000003",
   });
 
   const now = new Date();

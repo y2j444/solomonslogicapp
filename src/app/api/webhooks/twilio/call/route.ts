@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "to, from, callSid are required" }, { status: 400 });
   }
 
-  const user = await prisma.user.findFirst({ where: { twilioPhone: body.to } });
+  const user = await prisma.user.findFirst({ where: { AIPhone: body.to } });
   if (!user) {
     return NextResponse.json({ error: "Business not found for twilio number" }, { status: 404 });
   }

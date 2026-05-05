@@ -6,9 +6,9 @@ async function main() {
   const email = 'xboxmikej@gmail.com';
   // EDIT THESE VALUES:
   const businessName = 'Hanks Pet Store';
-  const twilioPhone = '+16155520319'; // <--- ENTER YOUR NEW TWILIO NUMBER HERE in E.164 format
+  const AIPhone = '+16155520319'; // <--- ENTER YOUR NEW TWILIO NUMBER HERE in E.164 format
 
-  if (twilioPhone === '+1XXXXXXXXXX') {
+  if (AIPhone === '+1XXXXXXXXXX') {
     console.error('Error: Please edit scripts/update-user.mjs and enter your actual Twilio number.');
     process.exit(1);
   }
@@ -18,14 +18,14 @@ async function main() {
       where: { email },
       data: {
         businessName,
-        twilioPhone,
+        AIPhone,
       },
     });
 
     console.log('--- User Updated Successfully ---');
     console.log(`Email: ${updated.email}`);
     console.log(`Business Name: ${updated.businessName}`);
-    console.log(`Twilio Phone: ${updated.twilioPhone}`);
+    console.log(`Twilio Phone: ${updated.AIPhone}`);
   } catch (error) {
     console.error('Error updating user:', error);
   } finally {

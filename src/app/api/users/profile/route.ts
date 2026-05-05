@@ -36,7 +36,7 @@ export async function PATCH(req: Request) {
       lastName?: string;
       businessName?: string;
       businessPhone?: string;
-      twilioPhone?: string;
+      AIPhone?: string;
     };
 
     const updated = await prisma.user.update({
@@ -46,7 +46,7 @@ export async function PATCH(req: Request) {
         lastName: body.lastName ?? (user as any).lastName,
         businessName: body.businessName ?? (user as any).businessName,
         businessPhone: body.businessPhone ?? (user as any).businessPhone,
-        twilioPhone: body.twilioPhone ?? (user as any).twilioPhone,
+        AIPhone: body.AIPhone ?? (user as any).AIPhone,
       } as any,
     });
 

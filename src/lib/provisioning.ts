@@ -71,7 +71,7 @@ export async function provisionBusinessAccount(userId: string, areaCode?: string
   await prisma.user.update({
     where: { id: userId },
     data: {
-      twilioPhone: twilioNumber,
+      AIPhone: twilioNumber,
     } as any,
   });
 
