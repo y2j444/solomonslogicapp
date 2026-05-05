@@ -35,7 +35,7 @@ export default defineAgent({
     try {
       // Since LiveKit UI rejects metadata, we'll read it from the Room Prefix!
       // Example Room Name: "16157163328-xxxyyy" -> prefix is "16157163328"
-      const roomPrefix = ctx.room.name.split('-')[0];
+      const roomPrefix = ctx.room.name.split(/[-_]/)[0];
       
       let rawNumber = ctx.room.metadata || roomPrefix || process.env.TELNYX_PHONE_NUMBER || "";
       if (typeof rawNumber === 'object') {
