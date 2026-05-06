@@ -74,6 +74,8 @@ export default defineAgent({
       }),
     });
 
+    const transcript: { role: string; text: string }[] = [];
+
     const agent = new voice.Agent({
       instructions: `You are the AI receptionist for ${businessName}.
         
@@ -100,7 +102,6 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
               const requestedEnd = new Date(requestedStart.getTime() + 30 * 60000);
 
               // Find any appointment that overlaps with the requested window
-              // Overlap formula: (StartA < EndB) AND (EndA > StartB)
               const conflict = await prisma.appointment.findFirst({
                 where: {
                   ownerUserId: userRecord?.id || "",
@@ -111,7 +112,6 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
               });
 
               if (conflict) {
-                // Check if the end of the existing appointment overlaps with our start
                 const conflictEnd = new Date(conflict.startTime.getTime() + conflict.durationMinutes * 60000);
                 if (conflictEnd > requestedStart) {
                   return "That time is already booked. Please ask the user for another time.";
@@ -140,10 +140,8 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
             // 1. Find or create contact
             const roomName = ctx.job.room?.name || "";
             const parts = roomName.split(/[-_]/);
-            const callerNumber = parts[1] || ""; // Format is typically "businessNumber-callerNumber-..."
+            const callerNumber = parts[1] || "";
             const normalizedPhone = callerNumber.startsWith("+") ? callerNumber : "+" + callerNumber;
-
-            console.log("Extracted caller phone:", normalizedPhone, "from room:", roomName);
 
             let contact = await prisma.contact.findFirst({
               where: { ownerUserId: userRecord?.id || "", phone: normalizedPhone },
@@ -171,14 +169,68 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
               },
             });
 
+            // 3. Mark call log as appointment created
+            try {
+              await prisma.callLog.update({
+                where: { callSid: ctx.job.id },
+                data: { 
+                  appointmentCreatedId: appointment.id,
+                  appointmentStatus: "AppointmentCreated"
+                }
+              });
+            } catch (e) {
+              console.error("Failed to update call log status:", e);
+            }
+
             return `Success! The appointment is booked for ${customerName} at ${startTime}.`;
           },
         }),
       },
     });
 
+    // Create initial call log
+    const roomName = ctx.job.room?.name || "";
+    const parts = roomName.split(/[-_]/);
+    const callerNumber = parts[1] || "Unknown";
+    const normalizedPhone = callerNumber.startsWith("+") ? callerNumber : "+" + callerNumber;
+
+    if (userRecord) {
+      await prisma.callLog.create({
+        data: {
+          callSid: ctx.job.id,
+          callerPhone: normalizedPhone,
+          direction: "Inbound",
+          ownerUserId: userRecord.id,
+          appointmentStatus: "PendingReview",
+        }
+      }).catch(e => console.error("Failed to create call log:", e));
+    }
+
+    // Subscribe to transcript events
+    session.on("user_transcript", (t) => {
+      if (t.is_final) transcript.push({ role: "user", message: t.text });
+    });
+    session.on("agent_transcript", (t) => {
+      if (t.is_final) transcript.push({ role: "agent", message: t.text });
+    });
+
+    const aiName = process.env.AI_NAME || "Solomon";
     await session.start({ agent, room: ctx.room });
     console.log("Agent started!");
-    session.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
+    session.say(`Hi, thanks for calling ${businessName}. This is ${aiName}!`);
+
+    // When session ends, save full transcript
+    session.on("closed", async () => {
+      console.log("Session closed, saving transcript...");
+      if (userRecord) {
+        await prisma.callLog.update({
+          where: { callSid: ctx.job.id },
+          data: {
+            transcript: transcript as any,
+            durationSeconds: Math.floor((Date.now() - ctx.job.createdAt.getTime()) / 1000),
+          }
+        }).catch(e => console.error("Failed to update final call log:", e));
+      }
+    });
   },
 });

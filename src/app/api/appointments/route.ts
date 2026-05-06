@@ -343,11 +343,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Look up business by phone number. If we have it from the payload, use it;
-    // otherwise fall back to finding by caller phone (for single-tenant setups).
-    let user = normalizedBusinessPhone
-      ? await prisma.user.findFirst({ where: { AIPhone: normalizedBusinessPhone } })
-      : null;
+    // 3. Identify the user (owner) by the business phone number
+    let user = null;
+    if (normalizedBusinessPhone) {
+      console.log(`[appointments] Searching for business with phone variations of: "${normalizedBusinessPhone}"`);
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { AIPhone: normalizedBusinessPhone },
+            { AIPhone: normalizedBusinessPhone.replace("+1", "") },
+            { AIPhone: normalizedBusinessPhone.replace("+", "") },
+            { AIPhone: AIPhone }, // Try original raw string too
+          ],
+        },
+      });
+    }
 
     if (!user) {
       // Fallback: if there's only one user in the system, use them
@@ -355,11 +365,14 @@ export async function POST(request: Request) {
       if (allUsers.length === 1) {
         user = allUsers[0];
       } else {
-        console.error(`[appointments] Lookup failed for business phone: "${normalizedBusinessPhone}" (Original: "${AIPhone}")`);
+        console.error(`[appointments] Lookup failed. Business phone: "${normalizedBusinessPhone}" (Raw: "${AIPhone}")`);
+        console.error(`[appointments] FULL PAYLOAD FOR DEBUGGING: ${JSON.stringify(body, null, 2)}`);
+        
         return vapiResult(
           toolCallId,
-          `Could not identify the business account for phone number: ${normalizedBusinessPhone || "Unknown"}. Please ensure your Vapi tool is sending the 'AIPhone' or 'twilioPhone' parameter correctly.`,
-          404
+          `Could not identify the business account for phone number: ${normalizedBusinessPhone || AIPhone || "Unknown"}. 
+           Payload check: businessPhoneFromPayload="${businessPhoneFromPayload}", args.AIPhone="${args.AIPhone}", body.AIPhone="${body.AIPhone}".`,
+          200 // Return 200 so we can see the message in the Vapi response
         );
       }
     }
