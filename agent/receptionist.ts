@@ -66,21 +66,23 @@ export default defineAgent({
       console.error("DB error during lookup:", e);
     }
 
-    const session = new voice.AgentSession({
-      stt: new deepgram.STT(),
-      tts: new cartesia.TTS({
-        voice: process.env.CARTESIA_VOICE_ID || "79a125e8-cd45-4c13-8a25-39667a4a4457", // Default to a professional voice
-      }),
-      llm: new openai.LLM({
-        model: "gpt-4o-mini",
-      }),
-    });
-
-    const transcript: { role: string; content: string }[] = [];
+    const getCallerNumber = () => {
+      const roomName = ctx.job.room?.name || "";
+      const allNumbers = roomName.match(/\d{10,}/g) || [];
+      const callerNumber = allNumbers.find(n => !n.startsWith("1615")) || allNumbers[1] || allNumbers[0] || "Unknown";
+      return callerNumber.startsWith("+") ? callerNumber : "+" + (callerNumber.startsWith("1") ? "" : "1") + callerNumber;
+    };
 
     const agent = new voice.Agent({
-      instructions: `You are the AI receptionist for ${businessName}.
+      instructions: `You are a friendly, professional human receptionist for ${businessName}.
         
+Personality & Tone:
+- You are sitting in a busy call center/office environment. Act like it!
+- Be warm, helpful, and slightly casual, like a real person working in a busy office.
+- Use natural human disfluencies sparingly (e.g., "umm," "hmm," "oh, let me see...") to make it sound like you are actively working.
+- Use phrases like "Thanks for calling, just one second while I pull that up!" or "Oh, I'd be happy to help with that!"
+- Your tone should be "phone-professional"—clear but energetic.
+
 Today's Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 Current Time: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
 
@@ -90,7 +92,7 @@ ${knowledgeBase}
 Call Handling Rules:
 ${callHandlingRules}
 
-Your goal is to be helpful and professional. Keep your responses concise.`,
+Your goal is to be helpful and professional. Keep your responses concise but natural.`,
       tools: {
         check_availability: llm.tool({
           description: "Check if a specific date and time is available for an appointment.",
@@ -103,7 +105,6 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
               const requestedStart = new Date(startTime);
               const requestedEnd = new Date(requestedStart.getTime() + 30 * 60000);
 
-              // Find any appointment that overlaps with the requested window
               const conflict = await prisma.appointment.findFirst({
                 where: {
                   ownerUserId: userRecord?.id || "",
@@ -123,7 +124,7 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
               return "That time is available! You can proceed to book the appointment.";
             } catch (error) {
               console.error("Availability check failed:", error);
-              return "I'm sorry, I ran into an error checking the calendar. Please try another time.";
+              return "I'm sorry, I ran into an error checking the calendar. Let's try another time.";
             }
           },
         }),
@@ -135,73 +136,72 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
             notes: z.string().optional().describe("Any additional notes for the appointment."),
           }),
           execute: async ({ startTime, customerName, notes }) => {
-            console.log("Booking appointment for:", customerName, "at", startTime);
-            
-            const appointmentDate = new Date(startTime);
-            
-            // 1. Find or create contact
-            const roomName = ctx.job.room?.name || "";
-            const parts = roomName.split(/[-_]/);
-            const callerNumber = parts[1] || "";
-            const normalizedPhone = callerNumber.startsWith("+") ? callerNumber : "+" + callerNumber;
+            try {
+              console.log("Booking appointment for:", customerName, "at", startTime);
+              const appointmentDate = new Date(startTime);
+              const normalizedPhone = getCallerNumber();
 
-            let contact = await prisma.contact.findFirst({
-              where: { ownerUserId: userRecord?.id || "", phone: normalizedPhone },
-            });
+              let contact = await prisma.contact.findFirst({
+                where: { ownerUserId: userRecord?.id || "", phone: normalizedPhone },
+              });
 
-            if (!contact) {
-              contact = await prisma.contact.create({
+              if (!contact) {
+                contact = await prisma.contact.create({
+                  data: {
+                    fullName: customerName,
+                    phone: normalizedPhone,
+                    ownerUserId: userRecord?.id || "",
+                  },
+                });
+              }
+
+              const appointment = await prisma.appointment.create({
                 data: {
-                  fullName: customerName,
-                  phone: normalizedPhone,
+                  title: `Appt: ${customerName}`,
+                  startTime: appointmentDate,
+                  durationMinutes: 30,
+                  contactId: contact.id,
                   ownerUserId: userRecord?.id || "",
+                  notes: notes || "Booked by Solomon AI",
                 },
               });
-            }
 
-            // 2. Create appointment
-            const appointment = await prisma.appointment.create({
-              data: {
-                title: `Appt: ${customerName}`,
-                startTime: appointmentDate,
-                durationMinutes: 30,
-                contactId: contact.id,
-                ownerUserId: userRecord?.id || "",
-                notes: notes || "Booked by Solomon AI",
-              },
-            });
-
-            // 3. Mark call log as appointment created
-            try {
               await prisma.callLog.update({
                 where: { callSid: ctx.job.id },
                 data: { 
                   appointmentCreatedId: appointment.id,
                   appointmentStatus: "AppointmentCreated"
                 }
-              });
-            } catch (e) {
-              console.error("Failed to update call log status:", e);
-            }
+              }).catch(() => {});
 
-            return `Success! The appointment is booked for ${customerName} at ${startTime}.`;
+              return `Success! The appointment is booked for ${customerName} at ${startTime}.`;
+            } catch (error) {
+              console.error("Booking failed:", error);
+              return "I'm sorry, I hit a snag while saving your appointment. Could you try one more time?";
+            }
           },
         }),
       },
     });
 
-    // Create initial call log
-    const roomName = ctx.job.room?.name || "";
-    // Smarter extraction: find the first 10+ digit number that isn't the business number
-    const allNumbers = roomName.match(/\d{10,}/g) || [];
-    const callerNumber = allNumbers.find(n => !n.startsWith("1615")) || allNumbers[1] || allNumbers[0] || "Unknown";
-    const normalizedPhone = callerNumber.startsWith("+") ? callerNumber : "+" + (callerNumber.startsWith("1") ? "" : "1") + callerNumber;
+    const transcript: { role: string; content: string }[] = [];
 
+    const session = new voice.AgentSession({
+      stt: new deepgram.STT(),
+      tts: new cartesia.TTS(
+        process.env.CARTESIA_VOICE_ID ? { voice: process.env.CARTESIA_VOICE_ID } : {}
+      ),
+      llm: new openai.LLM({
+        model: "gpt-4o-mini",
+      }),
+    });
+
+    // Create initial call log
     if (userRecord) {
       await prisma.callLog.create({
         data: {
           callSid: ctx.job.id,
-          callerPhone: normalizedPhone,
+          callerPhone: getCallerNumber(),
           direction: "Inbound",
           ownerUserId: userRecord.id,
           appointmentStatus: "PendingReview",
@@ -209,7 +209,6 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
       }).catch(e => console.error("Failed to create call log:", e));
     }
 
-    // Subscribe to transcript events
     session.on("user_transcript", (t) => {
       if (t.is_final) transcript.push({ role: "user", content: t.text });
     });
@@ -217,27 +216,31 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
       if (t.is_final) transcript.push({ role: "assistant", content: t.text });
     });
 
-    const aiName = process.env.AI_NAME || "Solomon";
     await session.start({ agent, room: ctx.room });
     console.log("Agent started!");
+    
+    const aiName = process.env.AI_NAME || "Solomon";
     session.say(`Hi, thanks for calling ${businessName}. This is ${aiName}!`);
 
-    // When session ends, save full transcript
     ctx.addShutdownCallback(async () => {
       console.log("Session shutting down, saving transcript...");
       if (userRecord) {
-        const summary = transcript.length > 0 
-          ? `Conversation with ${normalizedPhone}. ${transcript.length} messages exchanged.`
-          : "No dialog recorded.";
+        try {
+          const summary = transcript.length > 0 
+            ? `Conversation with ${getCallerNumber()}. ${transcript.length} messages exchanged.`
+            : "No dialog recorded.";
 
-        await prisma.callLog.update({
-          where: { callSid: ctx.job.id },
-          data: {
-            transcript: transcript as any,
-            aiSummary: summary,
-            durationSeconds: Math.floor((Date.now() - ctx.job.createdAt.getTime()) / 1000),
-          }
-        }).catch(e => console.error("Failed to update final call log:", e));
+          await prisma.callLog.update({
+            where: { callSid: ctx.job.id },
+            data: {
+              transcript: transcript as any,
+              aiSummary: summary,
+              durationSeconds: Math.floor((Date.now() - ctx.job.createdAt.getTime()) / 1000),
+            }
+          });
+        } catch (e) {
+          console.error("Failed to update final call log:", e);
+        }
       }
     });
   },
