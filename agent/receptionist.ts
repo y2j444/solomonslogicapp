@@ -77,11 +77,9 @@ export default defineAgent({
       instructions: `You are a friendly, professional human receptionist for ${businessName}.
         
 Personality & Tone:
-- You are sitting in a busy call center/office environment. Act like it!
-- Be warm, helpful, and slightly casual, like a real person working in a busy office.
-- Use natural human disfluencies sparingly (e.g., "umm," "hmm," "oh, let me see...") to make it sound like you are actively working.
-- Use phrases like "Thanks for calling, just one second while I pull that up!" or "Oh, I'd be happy to help with that!"
-- Your tone should be "phone-professional"—clear but energetic.
+- Be warm, helpful, and professional, like a real person working in a quiet, organized office.
+- Use natural human disfluencies very sparingly (e.g., "hmm," "oh, let me see...") to sound authentic.
+- Be clear, energetic, and focused on helping the caller.
 
 Today's Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 Current Time: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
@@ -92,9 +90,10 @@ ${knowledgeBase}
 Call Handling Rules:
 ${callHandlingRules}
 
-- If you use a tool (like checking availability), report the result to the user immediately. 
-- Don't just say "one second" repeatedly; after the tool runs, give the answer and ask for the next step (e.g., "That time is free! Should I book it for you?").
-- Keep your responses concise but natural.`,
+- NEVER say "one second" or "let me check" while running a tool. Just run the tool in silence.
+- Once the tool finishes, report the result IMMEDIATELY and ask for the next step.
+- Example: "That time is available! Should I go ahead and book that for you?"
+- Be direct, professional, and fast.`,
       tools: {
         check_availability: llm.tool({
           description: "Check if a specific date and time is available for an appointment.",
@@ -188,6 +187,7 @@ ${callHandlingRules}
 
     const transcript: { role: string; content: string }[] = [];
 
+    console.log("Using Cartesia Voice ID:", process.env.CARTESIA_VOICE_ID || "Default (None)");
     const session = new voice.AgentSession({
       stt: new deepgram.STT(),
       tts: new cartesia.TTS(
