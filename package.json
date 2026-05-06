@@ -12,7 +12,7 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "prisma db seed",
     "clerk:seed-users": "node scripts/create-clerk-users.mjs",
-    "agent": "set NODE_OPTIONS=--import tsx && tsx agent/index.ts dev"
+    "agent": "tsx agent/index.ts dev"
   },
   "dependencies": {
     "@cartesia/cartesia-js": "^3.0.0",
@@ -42,6 +42,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
     "prisma": "^6.16.0",
