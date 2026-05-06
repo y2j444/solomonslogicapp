@@ -74,7 +74,7 @@ export default defineAgent({
       }),
     });
 
-    const transcript: { role: string; text: string }[] = [];
+    const transcript: { role: string; content: string }[] = [];
 
     const agent = new voice.Agent({
       instructions: `You are the AI receptionist for ${businessName}.
@@ -190,9 +190,10 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
 
     // Create initial call log
     const roomName = ctx.job.room?.name || "";
-    const parts = roomName.split(/[-_]/);
-    const callerNumber = parts[1] || "Unknown";
-    const normalizedPhone = callerNumber.startsWith("+") ? callerNumber : "+" + callerNumber;
+    // Smarter extraction: find the first 10+ digit number that isn't the business number
+    const allNumbers = roomName.match(/\d{10,}/g) || [];
+    const callerNumber = allNumbers.find(n => !n.startsWith("1615")) || allNumbers[1] || allNumbers[0] || "Unknown";
+    const normalizedPhone = callerNumber.startsWith("+") ? callerNumber : "+" + (callerNumber.startsWith("1") ? "" : "1") + callerNumber;
 
     if (userRecord) {
       await prisma.callLog.create({
@@ -208,10 +209,10 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
 
     // Subscribe to transcript events
     session.on("user_transcript", (t) => {
-      if (t.is_final) transcript.push({ role: "user", message: t.text });
+      if (t.is_final) transcript.push({ role: "user", content: t.text });
     });
     session.on("agent_transcript", (t) => {
-      if (t.is_final) transcript.push({ role: "agent", message: t.text });
+      if (t.is_final) transcript.push({ role: "assistant", content: t.text });
     });
 
     const aiName = process.env.AI_NAME || "Solomon";
@@ -220,13 +221,18 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
     session.say(`Hi, thanks for calling ${businessName}. This is ${aiName}!`);
 
     // When session ends, save full transcript
-    session.on("closed", async () => {
-      console.log("Session closed, saving transcript...");
+    ctx.addShutdownCallback(async () => {
+      console.log("Session shutting down, saving transcript...");
       if (userRecord) {
+        const summary = transcript.length > 0 
+          ? `Conversation with ${normalizedPhone}. ${transcript.length} messages exchanged.`
+          : "No dialog recorded.";
+
         await prisma.callLog.update({
           where: { callSid: ctx.job.id },
           data: {
             transcript: transcript as any,
+            aiSummary: summary,
             durationSeconds: Math.floor((Date.now() - ctx.job.createdAt.getTime()) / 1000),
           }
         }).catch(e => console.error("Failed to update final call log:", e));
