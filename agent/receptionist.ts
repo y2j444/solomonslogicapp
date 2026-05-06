@@ -1,3 +1,7 @@
+import * as dotenv from "dotenv";
+dotenv.config({ override: true });
+process.env.DEBUG = "livekit:*";
+
 import {
   defineAgent,
   voice,
