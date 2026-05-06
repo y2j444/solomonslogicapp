@@ -28,6 +28,7 @@ export default defineAgent({
     let knowledgeBase = "No specific knowledge base provided.";
     let callHandlingRules = "Help the user by answering their questions.";
 
+    let userRecord = null;
     try {
       const roomPrefix = ctx.room.name.split(/[-_]/)[0];
       let rawNumber = ctx.room.metadata || roomPrefix || process.env.TELNYX_PHONE_NUMBER || "";
@@ -41,7 +42,7 @@ export default defineAgent({
 
       console.log("Looking up business for number:", calledNumber);
       
-      const user = await prisma.user.findFirst({
+      userRecord = await prisma.user.findFirst({
         where: {
           OR: [
             { AIPhone: calledNumber },
@@ -51,15 +52,15 @@ export default defineAgent({
         },
       });
 
-      if (user?.businessName) {
-        businessName = user.businessName;
+      if (userRecord?.businessName) {
+        businessName = userRecord.businessName;
         console.log("Found business name:", businessName);
       }
-      if (user?.knowledgeBase) {
-        knowledgeBase = user.knowledgeBase;
+      if (userRecord?.knowledgeBase) {
+        knowledgeBase = userRecord.knowledgeBase;
       }
-      if (user?.callHandlingRules) {
-        callHandlingRules = user.callHandlingRules;
+      if (userRecord?.callHandlingRules) {
+        callHandlingRules = userRecord.callHandlingRules;
       }
     } catch (e) {
       console.error("DB error during lookup:", e);
@@ -76,6 +77,9 @@ export default defineAgent({
     const agent = new voice.Agent({
       instructions: `You are the AI receptionist for ${businessName}.
         
+Today's Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+Current Time: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
+
 Business Knowledge:
 ${knowledgeBase}
 
@@ -90,27 +94,35 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
             startTime: z.string().describe("The ISO 8601 date and time to check (e.g., 2025-05-01T10:00:00)."),
           }),
           execute: async ({ startTime }) => {
-            console.log("Checking availability for:", startTime);
-            const checkDate = new Date(startTime);
-            const endDate = new Date(checkDate.getTime() + 30 * 60000); // Assume 30 min
+            try {
+              console.log("Checking availability for:", startTime);
+              const requestedStart = new Date(startTime);
+              const requestedEnd = new Date(requestedStart.getTime() + 30 * 60000);
 
-            const conflict = await prisma.appointment.findFirst({
-              where: {
-                ownerUserId: user.id,
-                OR: [
-                  { startTime: { gte: checkDate, lt: endDate } },
-                  {
-                    startTime: { lt: checkDate },
-                    // Simple check for overlap with previous appointments
+              // Find any appointment that overlaps with the requested window
+              // Overlap formula: (StartA < EndB) AND (EndA > StartB)
+              const conflict = await prisma.appointment.findFirst({
+                where: {
+                  ownerUserId: userRecord?.id || "",
+                  startTime: {
+                    lt: requestedEnd,
                   },
-                ],
-              },
-            });
+                },
+              });
 
-            if (conflict) {
-              return "That time is already booked. Please ask the user for another time.";
+              if (conflict) {
+                // Check if the end of the existing appointment overlaps with our start
+                const conflictEnd = new Date(conflict.startTime.getTime() + conflict.durationMinutes * 60000);
+                if (conflictEnd > requestedStart) {
+                  return "That time is already booked. Please ask the user for another time.";
+                }
+              }
+
+              return "That time is available! You can proceed to book the appointment.";
+            } catch (error) {
+              console.error("Availability check failed:", error);
+              return "I'm sorry, I ran into an error checking the calendar. Please try another time.";
             }
-            return "That time is available! You can proceed to book the appointment.";
           },
         }),
         book_appointment: llm.tool({
@@ -127,13 +139,14 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
             
             // 1. Find or create contact
             const roomName = ctx.job.room?.name || "";
-            const roomPrefix = roomName.split(/[-_]/)[0];
-            const rawNumber = ctx.room.metadata || roomPrefix || "";
-            const calledNumber = rawNumber.trim();
-            const normalizedPhone = calledNumber.startsWith("+") ? calledNumber : "+" + calledNumber;
+            const parts = roomName.split(/[-_]/);
+            const callerNumber = parts[1] || ""; // Format is typically "businessNumber-callerNumber-..."
+            const normalizedPhone = callerNumber.startsWith("+") ? callerNumber : "+" + callerNumber;
+
+            console.log("Extracted caller phone:", normalizedPhone, "from room:", roomName);
 
             let contact = await prisma.contact.findFirst({
-              where: { ownerUserId: user.id, phone: normalizedPhone },
+              where: { ownerUserId: userRecord?.id || "", phone: normalizedPhone },
             });
 
             if (!contact) {
@@ -141,7 +154,7 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
                 data: {
                   fullName: customerName,
                   phone: normalizedPhone,
-                  ownerUserId: user.id,
+                  ownerUserId: userRecord?.id || "",
                 },
               });
             }
@@ -153,7 +166,7 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
                 startTime: appointmentDate,
                 durationMinutes: 30,
                 contactId: contact.id,
-                ownerUserId: user.id,
+                ownerUserId: userRecord?.id || "",
                 notes: notes || "Booked by Solomon AI",
               },
             });
