@@ -27,22 +27,59 @@ Once the user provides their business details, the system handles the rest:
 
 ---
 
-## 3. Using a Personal/Existing Number
+---
 
-If you want the AI to answer calls to your **personal cell phone** or an **existing business line**, you don't need to change your number. Simply set up **Conditional Call Forwarding**.
+## 3. Phone System Setup (Manual Steps)
 
-### How to set up Call Forwarding:
-1.  Find your **AI Receptionist Number** in your Settings.
-2.  On your personal phone, set up forwarding for missed calls:
-    *   **Verizon/Sprint**: Dial `*71` + `[Your AI Number]` (e.g., `*716151234567`) and press call.
-    *   **AT&T/T-Mobile**: Dial `**61*` + `[Your AI Number]` + `#` and press call.
-3.  **Test it**: Call your personal number from a different phone and let it ring. The AI should answer after a few seconds!
+Depending on which stack you are using, follow the relevant guide below.
+
+### Option A: The New Stack (Telnyx + LiveKit)
+This is the high-performance, low-latency stack used for the Solomon Agent.
+
+1.  **Telnyx Setup**:
+    *   **Buy a Number**: Search and buy a number in the Telnyx Portal.
+    *   **Create SIP Connection**: Go to **Voice -> IP Connections** and create a "SIP Connection".
+    *   **Assign Number**: Assign your new number to this SIP Connection.
+2.  **LiveKit Setup**:
+    *   **Create Inbound Trunk**: In the LiveKit Dashboard, go to **SIP -> Inbound Trunks**. Create a new trunk and copy the **Trunk ID**.
+    *   **Add Dispatch Rule**: Go to **SIP -> Dispatch Rules**. Create a rule that points to your Trunk ID and uses the `receptionist` metadata/tag.
+3.  **Telnyx Forwarding**:
+    *   In Telnyx, set your Number's "Inbound Call Handling" to use the LiveKit SIP URI provided in the LiveKit Trunk settings.
+4.  **Run the Agent**:
+    *   `npm run agent` on your local machine or server.
+
+### Option B: The Legacy Stack (Twilio + Vapi)
+This is the standard webhook-based flow.
+
+1.  **Twilio Setup**:
+    *   **Buy a Number**: Buy a number in the Twilio Console.
+    *   **Configure Webhook**: Set the **"A Call Comes In"** webhook URL to:
+        `https://app.solomonslogic.com/api/webhooks/twilio/call`
+    *   Ensure the method is set to **HTTP POST**.
+2.  **Vapi Setup**:
+    *   **Connect Twilio**: Add your Twilio Account SID and Auth Token to Vapi.
+    *   **Import Number**: Import your Twilio number into Vapi.
+    *   **Set Tool URL**: Ensure the **Booking Tool** in Vapi is pointing to:
+        `https://app.solomonslogic.com/api/appointments`
 
 ---
 
 ## 4. How the AI Receptionist Works
 
-1.  **Call Handling**: When a customer calls the assigned **AI Number** (or is forwarded there), Vapi answers using the user's **Business Name** for context.
-2.  **Booking**: If the caller wants to schedule an appointment, Vapi calls the `/api/appointments` endpoint. 
+1.  **Call Handling**:
+    *   **Telnyx/LiveKit**: The call is routed via SIP directly to your local `npm run agent` process for sub-200ms latency.
+    *   **Twilio/Vapi**: Twilio sends a webhook to Solomon's server, which then triggers the Vapi voice pipeline.
+2.  **Booking**: Both systems call the `/api/appointments` endpoint to check availability and save records to the database.
+
+---
+
+## 5. Using a Personal/Existing Number
+
+If you want the AI to answer calls to your **personal cell phone** or an **existing business line**, set up **Conditional Call Forwarding** to your new AI Number.
+
+### How to set up Call Forwarding:
+1.  **Verizon/Sprint**: Dial `*71` + `[Your AI Number]` and press call.
+2.  **AT&T/T-Mobile**: Dial `**61*` + `[Your AI Number]` + `#` and press call.
+3.  **Test it**: Call your personal number from a different phone and let it ring. The AI should answer after a few seconds!
     *   The system identifies the business using the incoming phone number.
 3.  **Record Creation**: The CRM automatically creates a **Contact**, logs the **Call**, and schedules the **Appointment** under the correct company account.

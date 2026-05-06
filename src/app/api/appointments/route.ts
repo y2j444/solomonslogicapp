@@ -296,6 +296,7 @@ export async function POST(request: Request) {
     });
 
     if (!normalizedCallerPhone || !startTime) {
+      console.log("[appointments] VALIDATION FAILED:", { normalizedCallerPhone, startTime });
       return vapiResult(
         toolCallId,
         "Missing booking data. A caller phone number and appointment time are required.",
@@ -354,9 +355,10 @@ export async function POST(request: Request) {
       if (allUsers.length === 1) {
         user = allUsers[0];
       } else {
+        console.error(`[appointments] Lookup failed for business phone: "${normalizedBusinessPhone}" (Original: "${AIPhone}")`);
         return vapiResult(
           toolCallId,
-          "Could not identify the business account for this call. Please contact support.",
+          `Could not identify the business account for phone number: ${normalizedBusinessPhone || "Unknown"}. Please ensure your Vapi tool is sending the 'AIPhone' or 'twilioPhone' parameter correctly.`,
           404
         );
       }
