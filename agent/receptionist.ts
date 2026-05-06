@@ -10,13 +10,7 @@ import * as cartesia from "@livekit/agents-plugin-cartesia";
 import { prisma } from "../src/lib/prisma";
 
 export default defineAgent({
-  request_handler: async (req: JobRequest) => {
-    console.log("--- Received Job Request ---");
-    console.log("Job ID:", req.job.id);
-    console.log("Job Type:", req.job.type);
-    await req.accept();
-  },
-  entrypoint: async (ctx: JobContext) => {
+  entry: async (ctx: JobContext) => {
     console.log("--- Job Started ---");
     console.log("Connecting to room:", ctx.room.name);
     
@@ -69,12 +63,16 @@ export default defineAgent({
       console.error("DB error during lookup:", e);
     }
 
-    const voicePipelineAgent = new voice.VoicePipelineAgent({
+    const session = new voice.AgentSession({
       stt: new deepgram.STT(),
       tts: new cartesia.TTS(),
       llm: new openai.LLM({
         model: "gpt-4o-mini",
-        instructions: `You are the AI receptionist for ${businessName}.
+      }),
+    });
+
+    const agent = new voice.Agent({
+      instructions: `You are the AI receptionist for ${businessName}.
         
 Business Knowledge:
 ${knowledgeBase}
@@ -83,11 +81,10 @@ Call Handling Rules:
 ${callHandlingRules}
 
 Your goal is to be helpful and professional. Keep your responses concise.`,
-      }),
     });
 
-    voicePipelineAgent.start(ctx.room);
+    await session.start({ agent, room: ctx.room });
     console.log("Agent started!");
-    voicePipelineAgent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
+    session.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
   },
 });
