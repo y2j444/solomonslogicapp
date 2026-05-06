@@ -9,7 +9,7 @@ import * as deepgram from "@livekit/agents-plugin-deepgram";
 import * as cartesia from "@livekit/agents-plugin-cartesia";
 import { prisma } from "../src/lib/prisma";
 
-const agent = defineAgent({
+export default defineAgent({
   request_handler: async (req: JobRequest) => {
     console.log("--- Received Job Request ---");
     console.log("Job ID:", req.job.id);
@@ -70,7 +70,7 @@ const agent = defineAgent({
       console.error("DB error during lookup:", e);
     }
 
-    const agent = new voice.VoicePipelineAgent({
+    const voicePipelineAgent = new voice.VoicePipelineAgent({
       stt: new deepgram.STT(),
       tts: new cartesia.TTS(),
       llm: new openai.LLM({
@@ -87,10 +87,8 @@ Your goal is to be helpful and professional. Keep your responses concise.`,
       }),
     });
 
-    agent.start(ctx.room);
+    voicePipelineAgent.start(ctx.room);
     console.log("Agent started!");
-    agent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
+    voicePipelineAgent.say(`Hi, thanks for calling ${businessName}. This is Solomon!`);
   },
 });
-
-export default agent;
