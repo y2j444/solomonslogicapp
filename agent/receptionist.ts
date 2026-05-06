@@ -68,7 +68,9 @@ export default defineAgent({
 
     const session = new voice.AgentSession({
       stt: new deepgram.STT(),
-      tts: new cartesia.TTS(),
+      tts: new cartesia.TTS({
+        voice: process.env.CARTESIA_VOICE_ID || "79a125e8-cd45-4c13-8a25-39667a4a4457", // Default to a professional voice
+      }),
       llm: new openai.LLM({
         model: "gpt-4o-mini",
       }),

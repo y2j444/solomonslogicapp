@@ -81,5 +81,21 @@ If you want the AI to answer calls to your **personal cell phone** or an **exist
 1.  **Verizon/Sprint**: Dial `*71` + `[Your AI Number]` and press call.
 2.  **AT&T/T-Mobile**: Dial `**61*` + `[Your AI Number]` + `#` and press call.
 3.  **Test it**: Call your personal number from a different phone and let it ring. The AI should answer after a few seconds!
-    *   The system identifies the business using the incoming phone number.
-3.  **Record Creation**: The CRM automatically creates a **Contact**, logs the **Call**, and schedules the **Appointment** under the correct company account.
+---
+
+## 6. FAQ & Production Tips
+
+### How do I change the AI's voice?
+The agent uses **Cartesia** for ultra-fast, realistic speech. To change the voice:
+1.  Browse the [Cartesia Voice Library](https://play.cartesia.ai/library).
+2.  Copy the **Voice ID** of a "Sonic" voice you like.
+3.  Add it to your `.env` file: `CARTESIA_VOICE_ID="your-voice-id"`.
+4.  Restart the agent.
+
+### Is running the agent on my local machine stable for customers?
+While perfect for development and testing, **local hosting is not recommended for production** because:
+*   **Reliability**: If your home internet or power drops, the receptionist goes offline.
+*   **Maintenance**: Windows updates or computer sleep mode will stop the agent.
+*   **Latency**: Home networks often have higher "jitter" than data centers.
+
+**Production Recommendation**: Move your `agent/` folder to a cloud provider like **Railway.app**, **Render**, or a **VPS** (DigitalOcean/AWS). This ensures 99.9% uptime and the lowest possible latency for your customers.
