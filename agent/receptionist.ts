@@ -92,7 +92,9 @@ ${knowledgeBase}
 Call Handling Rules:
 ${callHandlingRules}
 
-Your goal is to be helpful and professional. Keep your responses concise but natural.`,
+- If you use a tool (like checking availability), report the result to the user immediately. 
+- Don't just say "one second" repeatedly; after the tool runs, give the answer and ask for the next step (e.g., "That time is free! Should I book it for you?").
+- Keep your responses concise but natural.`,
       tools: {
         check_availability: llm.tool({
           description: "Check if a specific date and time is available for an appointment.",
@@ -222,6 +224,8 @@ Your goal is to be helpful and professional. Keep your responses concise but nat
     const aiName = process.env.AI_NAME || "Solomon";
     session.say(`Hi, thanks for calling ${businessName}. This is ${aiName}!`);
 
+    const startTimeMillis = Date.now();
+
     ctx.addShutdownCallback(async () => {
       console.log("Session shutting down, saving transcript...");
       if (userRecord) {
@@ -235,7 +239,7 @@ Your goal is to be helpful and professional. Keep your responses concise but nat
             data: {
               transcript: transcript as any,
               aiSummary: summary,
-              durationSeconds: Math.floor((Date.now() - ctx.job.createdAt.getTime()) / 1000),
+              durationSeconds: Math.floor((Date.now() - startTimeMillis) / 1000),
             }
           });
         } catch (e) {
