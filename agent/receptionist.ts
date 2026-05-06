@@ -12,7 +12,7 @@ import { prisma } from "../src/lib/prisma";
 export default defineAgent({
   entry: async (ctx: JobContext) => {
     console.log("--- Job Started ---");
-    console.log("Connecting to room:", ctx.room.name);
+    console.log("Connecting to room:", ctx.job.room?.name);
     
     try {
       await ctx.connect();

@@ -37,13 +37,13 @@ async function upsertUser(user: SeedUser) {
     });
   }
 
-  const existingByTwilioPhone = await prisma.user.findUnique({
+  const existingByAIPhone = await prisma.user.findUnique({
     where: { AIPhone: user.AIPhone },
   });
 
-  if (existingByTwilioPhone) {
+  if (existingByAIPhone) {
     return prisma.user.update({
-      where: { id: existingByTwilioPhone.id },
+      where: { id: existingByAIPhone.id },
       data: {
         email: user.email,
         firstName: user.firstName,
