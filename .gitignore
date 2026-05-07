@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Ghost Profile (Social Media Sessions)
+ghost_profile/
+
 # env files (can opt-in for committing if needed)
 .env*
 

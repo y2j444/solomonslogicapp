@@ -14,14 +14,15 @@ if (process.env.OPENAI_API_KEY) {
 
 import { OpenAI } from "openai";
 import { prisma } from "../src/lib/prisma";
-import { outreachAgent } from "./outreach";
-import { socialAgent } from "./social";
-import { ghostPost } from "./ghost_poster";
-
 export async function runAgencyTask(task: string) {
   if (!process.env.OPENAI_API_KEY?.startsWith("sk-")) {
     throw new Error("Invalid or missing OPENAI_API_KEY in environment.");
   }
+
+  // Lazy load agents to improve performance
+  const { outreachAgent } = await import("./outreach");
+  const { socialAgent } = await import("./social");
+  const { ghostPost } = await import("./ghost_poster");
   const openai = new OpenAI();
   console.log(`[PM] New Task: "${task}"`);
 

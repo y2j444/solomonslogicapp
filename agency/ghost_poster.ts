@@ -30,10 +30,20 @@ export async function ghostLogin() {
 }
 
 export async function ghostPost(platform: "linkedin" | "facebook" | "google", content: string) {
+  // Safety check: Ghost only runs on the local machine where Chrome is installed
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    return "[Ghost] Error: The Social Ghost is a 'Local Agent'. For security, it must run from your local terminal or local dev environment to access your saved accounts.";
+  }
+
   console.log(`[Ghost] Starting automated post to ${platform}...`);
   
   const context = await chromium.launchPersistentContext(PROFILE_PATH, {
-    headless: false, // Keep it visible for now so user can see the magic
+    headless: false,
+    channel: "chrome",
+    args: [
+      "--disable-blink-features=AutomationControlled",
+      "--no-sandbox",
+    ],
   });
 
   const page = await context.newPage();
@@ -41,9 +51,15 @@ export async function ghostPost(platform: "linkedin" | "facebook" | "google", co
   try {
     if (platform === "linkedin") {
       await page.goto("https://www.linkedin.com/feed/");
-      await page.click("button.share-mb-trigger");
-      await page.fill("div.ql-editor", content);
-      await page.click("button.share-actions__primary-action");
+      // Try multiple possible selectors for the post button
+      const postButton = page.locator('button:has-text("Start a post"), .share-mb-trigger');
+      await postButton.click();
+      
+      const editor = page.locator('.ql-editor, div[role="textbox"]');
+      await editor.waitFor();
+      await editor.fill(content);
+      
+      await page.click('button:has-text("Post"), .share-actions__primary-action');
       return "[Ghost] LinkedIn post successful! Your update is live.";
     } else if (platform === "facebook") {
       await page.goto("https://www.facebook.com");
