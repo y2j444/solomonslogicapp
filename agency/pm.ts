@@ -1,11 +1,12 @@
 import * as dotenv from "dotenv";
-dotenv.config({ path: ".env.local", override: true });
+import path from "path";
+
+// Load environment variables from .env.local
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), override: true });
 
 // Clean the API key (remove quotes or spaces)
 if (process.env.OPENAI_API_KEY) {
   process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY.trim().replace(/^["']|["']$/g, "");
-  const key = process.env.OPENAI_API_KEY;
-  console.log(`[PM] Using API Key: ${key.substring(0, 7)}...${key.substring(key.length - 3)}`);
 }
 
 import { OpenAI } from "openai";
@@ -55,6 +56,6 @@ async function main() {
   console.log(result);
 }
 
-if (require.main === module || process.argv[1]?.includes("pm.ts")) {
+if (process.argv[1]?.includes("pm.ts")) {
   main().catch(console.error);
 }
