@@ -1,9 +1,9 @@
 import * as dotenv from "dotenv";
 import path from "path";
 
-// Only load .env.local if we're not in a production environment (like Vercel)
-// or if the key is currently missing from process.env
-if (!process.env.OPENAI_API_KEY || process.env.NODE_ENV !== "production") {
+// In production (Vercel), environment variables are already in process.env.
+// We only need to load .env.local manually when running as a standalone script locally.
+if (!process.env.OPENAI_API_KEY) {
   dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), override: true });
 }
 
@@ -16,6 +16,7 @@ import { OpenAI } from "openai";
 import { prisma } from "../src/lib/prisma";
 import { outreachAgent } from "./outreach";
 import { socialAgent } from "./social";
+import { ghostPost } from "./ghost_poster";
 
 export async function runAgencyTask(task: string) {
   if (!process.env.OPENAI_API_KEY?.startsWith("sk-")) {
@@ -24,9 +25,16 @@ export async function runAgencyTask(task: string) {
   const openai = new OpenAI();
   console.log(`[PM] New Task: "${task}"`);
 
-  const taskLower = task.toLowerCase();
-
-  if (taskLower.includes("social") || taskLower.includes("facebook") || taskLower.includes("linkedin") || taskLower.includes("post")) {
+  if (taskLower.includes("publish") || taskLower.includes("post now") || (taskLower.includes("ghost") && taskLower.includes("post"))) {
+    console.log("[PM] Delegating to Social Ghost for automated posting...");
+    // Extract platform and content from task or use defaults
+    const platform = taskLower.includes("linkedin") ? "linkedin" : 
+                     taskLower.includes("facebook") ? "facebook" : 
+                     taskLower.includes("google") ? "google" : "linkedin";
+    
+    // In a real scenario, we'd pull the latest draft. For now, let's post a status update.
+    return await ghostPost(platform, task);
+  } else if (taskLower.includes("social") || taskLower.includes("facebook") || taskLower.includes("linkedin") || taskLower.includes("post")) {
     console.log("[PM] Delegating to Social Media Agent...");
     return await socialAgent(task);
   } else if (taskLower.includes("find") || taskLower.includes("customer") || taskLower.includes("lead")) {

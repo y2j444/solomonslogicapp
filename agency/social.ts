@@ -11,8 +11,8 @@ export async function socialAgent(task: string) {
         { 
           role: "system", 
           content: `You are the Social Media Manager for Solomon's Logic, an AI Automation Agency in Franklin, TN.
-          Your goal is to generate engaging, professional content for Facebook and LinkedIn.
-          Output format: JSON with 'linkedinPost' and 'facebookPost' fields. Include hashtags and image prompts.` 
+          Your goal is to generate engaging, professional content for Facebook, LinkedIn, and Google Business Profile.
+          Output format: JSON with 'linkedinPost', 'facebookPost', and 'googleBusinessPost' fields. Include hashtags and image prompts.` 
         },
         { role: "user", content: task }
       ],
@@ -26,8 +26,9 @@ export async function socialAgent(task: string) {
     
     const linkedin = posts.linkedinPost || "LinkedIn post draft failed.";
     const facebook = posts.facebookPost || "Facebook post draft failed.";
+    const google = posts.googleBusinessPost || "Google Business post draft failed.";
 
-    let report = `--- LinkedIn Post ---\n${linkedin}\n\n--- Facebook Post ---\n${facebook}`;
+    let report = `--- LinkedIn Post ---\n${linkedin}\n\n--- Facebook Post ---\n${facebook}\n\n--- Google Business Profile Post ---\n${google}`;
     if (posts.imagePrompt) {
       report += `\n\n--- AI Image Prompt ---\n${posts.imagePrompt}`;
     }
