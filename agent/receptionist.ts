@@ -80,6 +80,10 @@ Personality & Tone:
 - Be warm, helpful, and professional, like a real person working in a quiet, organized office.
 - Use natural human disfluencies very sparingly (e.g., "hmm," "oh, let me see...") to sound authentic.
 - Be clear, energetic, and focused on helping the caller.
+- If a caller wants to change or reschedule an existing appointment:
+  1. Call 'get_customer_appointments' to find their current booking.
+  2. Use 'update_appointment' to apply the change.
+- Never create a new appointment if they are just trying to move an existing one.
 
 Today's Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 Current Time: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
@@ -129,6 +133,32 @@ ${callHandlingRules}
             }
           },
         }),
+        get_customer_appointments: llm.tool({
+          description: "Get all existing appointments for the current customer.",
+          parameters: z.object({}),
+          execute: async () => {
+            try {
+              const normalizedPhone = getCallerNumber();
+              const appointments = await prisma.appointment.findMany({
+                where: {
+                  contact: { phone: normalizedPhone },
+                  ownerUserId: userRecord?.id || "",
+                },
+                orderBy: { startTime: "asc" },
+                take: 5,
+              });
+
+              if (appointments.length === 0) return "You don't have any appointments scheduled currently.";
+
+              return appointments.map(a => 
+                `ID: ${a.id}, Time: ${a.startTime.toLocaleString()}, Note: ${a.notes || 'None'}`
+              ).join("\n");
+            } catch (error) {
+              console.error("Lookup failed:", error);
+              return "I'm sorry, I couldn't retrieve your appointments right now.";
+            }
+          },
+        }),
         book_appointment: llm.tool({
           description: "Book an appointment for the customer.",
           parameters: z.object({
@@ -156,6 +186,19 @@ ${callHandlingRules}
                 });
               }
 
+              // Duplicate protection: check if an appointment already exists for this contact at this time
+              const existingAppt = await prisma.appointment.findFirst({
+                where: {
+                  contactId: contact.id,
+                  startTime: appointmentDate,
+                }
+              });
+
+              if (existingAppt) {
+                console.log("Existing appointment found, skipping duplicate creation.");
+                return `The appointment for ${customerName} at ${startTime} is already on the calendar! I've confirmed it's all set.`;
+              }
+
               const appointment = await prisma.appointment.create({
                 data: {
                   title: `Appt: ${customerName}`,
@@ -179,6 +222,32 @@ ${callHandlingRules}
             } catch (error) {
               console.error("Booking failed:", error);
               return "I'm sorry, I hit a snag while saving your appointment. Could you try one more time?";
+            }
+          },
+        }),
+        update_appointment: llm.tool({
+          description: "Update an existing appointment for the customer (e.g., reschedule).",
+          parameters: z.object({
+            existingAppointmentId: z.string().describe("The ID of the appointment to update."),
+            newStartTime: z.string().optional().describe("The new ISO 8601 date and time."),
+            notes: z.string().optional().describe("Updated notes."),
+          }),
+          execute: async ({ existingAppointmentId, newStartTime, notes }) => {
+            try {
+              console.log("Updating appointment:", existingAppointmentId);
+              const updateData: any = {};
+              if (newStartTime) updateData.startTime = new Date(newStartTime);
+              if (notes) updateData.notes = notes;
+
+              const appointment = await prisma.appointment.update({
+                where: { id: existingAppointmentId },
+                data: updateData,
+              });
+
+              return `Success! I've updated the appointment. It is now scheduled for ${appointment.startTime.toLocaleString()}.`;
+            } catch (error) {
+              console.error("Update failed:", error);
+              return "I couldn't find that appointment to update. Could you give me the details again?";
             }
           },
         }),
@@ -211,25 +280,10 @@ ${callHandlingRules}
       }).catch(e => console.error("Failed to create call log:", e));
     }
 
-    session.on("user_transcript", (t) => {
-      if (t.is_final) transcript.push({ role: "user", content: t.text });
-    });
-    session.on("agent_transcript", (t) => {
-      if (t.is_final) transcript.push({ role: "assistant", content: t.text });
-    });
-
-    await session.start({ agent, room: ctx.room });
-    console.log("Agent started!");
-    
-    const aiName = process.env.AI_NAME || "Solomon";
-    session.say(`Hi, thanks for calling ${businessName}. This is ${aiName}!`);
-
-    const startTimeMillis = Date.now();
-
-    ctx.addShutdownCallback(async () => {
-      console.log("Session shutting down, saving transcript...");
+    const saveTranscript = async () => {
       if (userRecord) {
         try {
+          console.log(`[Logging] Saving ${transcript.length} turns to DB...`);
           const summary = transcript.length > 0 
             ? `Conversation with ${getCallerNumber()}. ${transcript.length} messages exchanged.`
             : "No dialog recorded.";
@@ -243,9 +297,48 @@ ${callHandlingRules}
             }
           });
         } catch (e) {
-          console.error("Failed to update final call log:", e);
+          // Silent fail for background logging
         }
       }
+    };
+
+    session.on("user_transcript", (t) => {
+      const text = t.text?.trim();
+      if (text) {
+        // If the last entry was a 'user' turn and wasn't final, update it
+        const lastTurn = transcript[transcript.length - 1];
+        if (lastTurn && lastTurn.role === "user" && !t.is_final) {
+          lastTurn.content = text;
+        } else if (t.is_final || !lastTurn || lastTurn.role !== "user") {
+          // If it's final or the first turn of this role, push it
+          transcript.push({ role: "user", content: text });
+        }
+        saveTranscript();
+      }
+    });
+    session.on("agent_transcript", (t) => {
+      const text = t.text?.trim();
+      if (text) {
+        const lastTurn = transcript[transcript.length - 1];
+        if (lastTurn && lastTurn.role === "assistant" && !t.is_final) {
+          lastTurn.content = text;
+        } else if (t.is_final || !lastTurn || lastTurn.role !== "assistant") {
+          transcript.push({ role: "assistant", content: text });
+        }
+        saveTranscript();
+      }
+    });
+
+    await session.start({ agent, room: ctx.room });
+    console.log("Agent started!");
+    
+    session.say(`Hi, thanks for calling ${businessName}. This is Sara, how can I help you?`);
+
+    const startTimeMillis = Date.now();
+
+    ctx.addShutdownCallback(async () => {
+      console.log("Session shutting down, saving final state...");
+      await saveTranscript();
     });
   },
 });
