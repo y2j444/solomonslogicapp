@@ -1,8 +1,11 @@
 import * as dotenv from "dotenv";
 import path from "path";
 
-// Load environment variables from .env.local
-dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), override: true });
+// Only load .env.local if we're not in a production environment (like Vercel)
+// or if the key is currently missing from process.env
+if (!process.env.OPENAI_API_KEY || process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), override: true });
+}
 
 // Clean the API key (remove quotes or spaces)
 if (process.env.OPENAI_API_KEY) {
