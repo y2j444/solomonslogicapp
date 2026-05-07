@@ -303,7 +303,7 @@ ${callHandlingRules}
       }
     };
 
-    session.on("user_input_transcribed", (t) => {
+    session.on(voice.AgentSessionEventTypes.UserInputTranscribed, (t: voice.UserInputTranscribedEvent) => {
       const text = t.transcript?.trim();
       if (text) {
         const lastTurn = transcript[transcript.length - 1];
@@ -315,9 +315,12 @@ ${callHandlingRules}
         saveTranscript();
       }
     });
-    session.on("conversation_item_added", (ev) => {
-      if (ev.item.role === "assistant" && ev.item.content) {
-        transcript.push({ role: "assistant", content: ev.item.content as string });
+    session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (ev: voice.ConversationItemAddedEvent) => {
+      if ('role' in ev.item && ev.item.role === "assistant" && ev.item.content) {
+        const textContent = Array.isArray(ev.item.content) 
+          ? ev.item.content.map(c => (typeof c === 'object' && c !== null && 'text' in c) ? c.text : (typeof c === 'string' ? c : '')).join('')
+          : ev.item.content;
+        transcript.push({ role: "assistant", content: textContent as string });
         saveTranscript();
       }
     });
