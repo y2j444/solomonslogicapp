@@ -30,8 +30,8 @@ export default defineAgent({
 
     let userRecord = null;
     try {
-      const roomPrefix = ctx.room.name.split(/[-_]/)[0];
-      let rawNumber = ctx.room.metadata || roomPrefix || process.env.TELNYX_PHONE_NUMBER || "";
+      const roomPrefix = ctx.job.room?.name.split(/[-_]/)[0] || "";
+      let rawNumber = ctx.job.room?.metadata || roomPrefix || process.env.TELNYX_PHONE_NUMBER || "";
       if (typeof rawNumber === "object") {
         rawNumber = JSON.stringify(rawNumber);
       }
@@ -280,6 +280,7 @@ ${callHandlingRules}
       }).catch(e => console.error("Failed to create call log:", e));
     }
 
+    const startTimeMillis = Date.now();
     const saveTranscript = async () => {
       if (userRecord) {
         try {
@@ -302,29 +303,21 @@ ${callHandlingRules}
       }
     };
 
-    session.on("user_transcript", (t) => {
-      const text = t.text?.trim();
+    session.on("user_input_transcribed", (t) => {
+      const text = t.transcript?.trim();
       if (text) {
-        // If the last entry was a 'user' turn and wasn't final, update it
         const lastTurn = transcript[transcript.length - 1];
-        if (lastTurn && lastTurn.role === "user" && !t.is_final) {
+        if (lastTurn && lastTurn.role === "user" && !t.isFinal) {
           lastTurn.content = text;
-        } else if (t.is_final || !lastTurn || lastTurn.role !== "user") {
-          // If it's final or the first turn of this role, push it
+        } else if (t.isFinal || !lastTurn || lastTurn.role !== "user") {
           transcript.push({ role: "user", content: text });
         }
         saveTranscript();
       }
     });
-    session.on("agent_transcript", (t) => {
-      const text = t.text?.trim();
-      if (text) {
-        const lastTurn = transcript[transcript.length - 1];
-        if (lastTurn && lastTurn.role === "assistant" && !t.is_final) {
-          lastTurn.content = text;
-        } else if (t.is_final || !lastTurn || lastTurn.role !== "assistant") {
-          transcript.push({ role: "assistant", content: text });
-        }
+    session.on("conversation_item_added", (ev) => {
+      if (ev.item.role === "assistant" && ev.item.content) {
+        transcript.push({ role: "assistant", content: ev.item.content as string });
         saveTranscript();
       }
     });
@@ -334,7 +327,6 @@ ${callHandlingRules}
     
     session.say(`Hi, thanks for calling ${businessName}. This is Sara, how can I help you?`);
 
-    const startTimeMillis = Date.now();
 
     ctx.addShutdownCallback(async () => {
       console.log("Session shutting down, saving final state...");

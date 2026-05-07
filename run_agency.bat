@@ -1,0 +1,3 @@
+@echo off
+echo Starting Solomon's Logic Agency PM...
+npx tsx agency/pm.ts %*
