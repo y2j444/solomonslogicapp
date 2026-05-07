@@ -50,16 +50,19 @@ export async function ghostPost(platform: "linkedin" | "facebook" | "google", co
 
   try {
     if (platform === "linkedin") {
-      await page.goto("https://www.linkedin.com/feed/");
-      // Try multiple possible selectors for the post button
-      const postButton = page.locator('button:has-text("Start a post"), .share-mb-trigger');
-      await postButton.click();
+      await page.goto("https://www.linkedin.com/feed/", { waitUntil: "networkidle" });
       
-      const editor = page.locator('.ql-editor, div[role="textbox"]');
-      await editor.waitFor();
-      await editor.fill(content);
+      // Try to find the post trigger by various common attributes
+      const postTrigger = page.locator('button.share-mb-trigger, button:has-text("Start a post"), #ember27, [data-control-name="share_placeholder"]');
+      await postTrigger.first().waitFor();
+      await postTrigger.first().click();
       
-      await page.click('button:has-text("Post"), .share-actions__primary-action');
+      const editor = page.locator('.ql-editor, [role="textbox"], .editor-content');
+      await editor.first().waitFor();
+      await editor.first().fill(content);
+      
+      const publishBtn = page.locator('button.share-actions__primary-action, button:has-text("Post"), .share-actions__button--publish');
+      await publishBtn.first().click();
       return "[Ghost] LinkedIn post successful! Your update is live.";
     } else if (platform === "facebook") {
       await page.goto("https://www.facebook.com");
