@@ -25,14 +25,14 @@ export async function runAgencyTask(task: string) {
   const openai = new OpenAI();
   console.log(`[PM] New Task: "${task}"`);
 
+  const taskLower = task.toLowerCase();
+
   if (taskLower.includes("publish") || taskLower.includes("post now") || (taskLower.includes("ghost") && taskLower.includes("post"))) {
     console.log("[PM] Delegating to Social Ghost for automated posting...");
-    // Extract platform and content from task or use defaults
     const platform = taskLower.includes("linkedin") ? "linkedin" : 
                      taskLower.includes("facebook") ? "facebook" : 
                      taskLower.includes("google") ? "google" : "linkedin";
     
-    // In a real scenario, we'd pull the latest draft. For now, let's post a status update.
     return await ghostPost(platform, task);
   } else if (taskLower.includes("social") || taskLower.includes("facebook") || taskLower.includes("linkedin") || taskLower.includes("post")) {
     console.log("[PM] Delegating to Social Media Agent...");
