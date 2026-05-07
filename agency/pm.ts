@@ -13,14 +13,11 @@ import { prisma } from "../src/lib/prisma";
 import { outreachAgent } from "./outreach";
 import { socialAgent } from "./social";
 
-if (!process.env.OPENAI_API_KEY?.startsWith("sk-")) {
-  console.error("[PM] Error: Invalid OPENAI_API_KEY format in .env.local");
-  process.exit(1);
-}
-
-const openai = new OpenAI();
-
 export async function runAgencyTask(task: string) {
+  if (!process.env.OPENAI_API_KEY?.startsWith("sk-")) {
+    throw new Error("Invalid or missing OPENAI_API_KEY in environment.");
+  }
+  const openai = new OpenAI();
   console.log(`[PM] New Task: "${task}"`);
 
   const taskLower = task.toLowerCase();
@@ -32,6 +29,7 @@ export async function runAgencyTask(task: string) {
     console.log("[PM] Delegating to Outreach Agent...");
     return await outreachAgent(task);
   } else {
+    const openai = new OpenAI();
     console.log("[PM] I'm not sure which agent handles that yet. I'll try to help directly.");
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
