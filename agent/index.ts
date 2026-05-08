@@ -25,6 +25,7 @@ cli.runApp(new ServerOptions({
   apiKey: process.env.LIVEKIT_API_KEY,
   apiSecret: process.env.LIVEKIT_API_SECRET,
   host: "0.0.0.0",
+  port: parseInt(process.env.PORT || "8081"), // Crucial for Railway health checks
   initializeProcessTimeout: 120,
   loadThreshold: 0.85,
 }));
