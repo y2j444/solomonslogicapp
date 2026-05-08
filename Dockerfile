@@ -2,7 +2,7 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Install system dependencies for LiveKit and Python (for some AI libs)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -17,11 +17,11 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build the project
-RUN npx tsc
+# Build the Agent for Production
+RUN npx tsc -p tsconfig.agent.json
 
 # Set production environment
 ENV NODE_ENV=production
 
-# Start the agent worker
-CMD ["npx", "tsx", "agent/index.ts", "start"]
+# Start the agent worker using the compiled code
+CMD ["node", "dist/agent/index.js", "start"]
