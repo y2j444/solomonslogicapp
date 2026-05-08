@@ -19,10 +19,11 @@ process.on("uncaughtException", (err) => {
 });
 
 cli.runApp(new ServerOptions({
-  agent: path.resolve(__dirname, "receptionist.ts"),
+  agent: path.join(__dirname, "receptionist.ts"),
   apiKey: process.env.LIVEKIT_API_KEY,
   apiSecret: process.env.LIVEKIT_API_SECRET,
   host: "0.0.0.0",
-  initializeProcessTimeout: 120,
-  loadThreshold: 0.85,
+  // Give the sub-process even more time to shake hands with the supervisor
+  initializeProcessTimeout: 300, 
+  loadThreshold: 0.9, 
 }));
