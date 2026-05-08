@@ -15,7 +15,7 @@ export default defineAgent({
     const openai = await import("@livekit/agents-plugin-openai");
     const deepgram = await import("@livekit/agents-plugin-deepgram");
     const cartesia = await import("@livekit/agents-plugin-cartesia");
-    const { prisma } = await import("../src/lib/prisma.js");
+    const { prisma } = await import("../src/lib/prisma");
     
     console.log("--- Job Started ---");
     console.log("Connecting to room:", ctx.job.room?.name);
