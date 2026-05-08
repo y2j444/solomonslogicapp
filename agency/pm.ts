@@ -14,6 +14,11 @@ if (process.env.OPENAI_API_KEY) {
 
 import { OpenAI } from "openai";
 import { prisma } from "../src/lib/prisma";
+import { outreachAgent } from "./outreach";
+import { socialAgent } from "./social";
+import { ghostPost, ghostUpdateDescription } from "./ghost_poster";
+import { reviewAgent } from "./reviews";
+
 export async function runAgencyTask(task: string) {
   if (!process.env.OPENAI_API_KEY?.startsWith("sk-")) {
     throw new Error("Invalid or missing OPENAI_API_KEY in environment.");
@@ -35,6 +40,13 @@ export async function runAgencyTask(task: string) {
                      taskLower.includes("google") ? "google" : "linkedin";
     
     return await ghostPost(platform, task);
+  } else if (taskLower.includes("update") && (taskLower.includes("description") || taskLower.includes("seo"))) {
+    console.log("[PM] Delegating to Social Ghost for profile update...");
+    const seoDescription = `Solomon's Logic is Franklin's premier AI Automation Agency, specializing in 24/7 AI Receptionists for Law Firms, Clinics, and Home Services in the Middle Tennessee area. We help Nashville businesses scale with cutting-edge voice AI and CRM integration. Call today for a live demo!`;
+    return await ghostUpdateDescription("google", seoDescription);
+  } else if (taskLower.includes("review") || taskLower.includes("feedback") || taskLower.includes("recommendation")) {
+    console.log("[PM] Delegating to Review Agent...");
+    return await reviewAgent(task);
   } else if (taskLower.includes("social") || taskLower.includes("facebook") || taskLower.includes("linkedin") || taskLower.includes("post")) {
     console.log("[PM] Delegating to Social Media Agent...");
     return await socialAgent(task);
