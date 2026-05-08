@@ -24,4 +24,4 @@ RUN npx tsc
 ENV NODE_ENV=production
 
 # Start the agent worker
-CMD ["npx", "tsx", "agent/index.ts", "dev"]
+CMD ["npx", "tsx", "agent/index.ts", "start"]
