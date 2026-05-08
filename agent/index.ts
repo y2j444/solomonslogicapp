@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
-dotenv.config({ override: true });
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ override: true });
+}
 import { cli, ServerOptions } from "@livekit/agents";
 
 // Enable detailed debug logging
