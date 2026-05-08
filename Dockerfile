@@ -14,7 +14,10 @@ RUN npm install
 
 COPY . .
 
-# Build the project (if needed)
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Build the project
 RUN npx tsc
 
 # Set production environment
