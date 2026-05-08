@@ -16,17 +16,9 @@ import fs from "fs";
 
 console.log("Launching Solomon Agent...");
 
-// Dual-mode pathing: Check for compiled .js (prod) or raw .ts (dev)
-let agentPath = path.join(__dirname, "receptionist.js");
-if (!fs.existsSync(agentPath)) {
-  agentPath = path.join(__dirname, "receptionist.ts");
-}
-
-console.log(`[Debug] Using agent at: ${agentPath}`);
-
-process.on("uncaughtException", (err) => {
-  console.error("CRITICAL: Uncaught Exception in Main Process:", err);
-});
+// Simple pathing: In production (dist), everything is in the same folder.
+// In dev, tsx handles the resolution.
+const agentPath = path.join(__dirname, "receptionist.js");
 
 cli.runApp(new ServerOptions({
   agent: agentPath,

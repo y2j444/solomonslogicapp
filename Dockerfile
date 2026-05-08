@@ -17,11 +17,11 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build the Agent for Production
-RUN npx tsc -p tsconfig.agent.json
+# Build and Bundle the Agent for Production
+RUN node build-agent.mjs
 
 # Set production environment
 ENV NODE_ENV=production
 
-# Start the agent worker using the compiled code
+# Start the agent worker using the bundled code
 CMD ["node", "dist/agent/index.js", "start"]
