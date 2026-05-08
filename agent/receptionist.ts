@@ -1,25 +1,22 @@
 console.log("RECEPTIONIST SUB-PROCESS INITIALIZING...");
 
-console.log("[Debug] Loading LiveKit Agents...");
 import { 
   defineAgent, 
   voice, 
   llm,
   type JobContext,
-  type JobRequest
 } from "@livekit/agents";
-console.log("[Debug] Loading Zod...");
 import { z } from "zod";
-console.log("[Debug] Loading Plugins...");
-import * as openai from "@livekit/agents-plugin-openai";
-import * as deepgram from "@livekit/agents-plugin-deepgram";
-import * as cartesia from "@livekit/agents-plugin-cartesia";
-console.log("[Debug] Loading Prisma...");
-import { prisma } from "../src/lib/prisma";
-console.log("[Debug] All imports successful!");
 
 export default defineAgent({
   entry: async (ctx: JobContext) => {
+    // Lazy load plugins only when a job starts
+    console.log("[Debug] Loading Plugins...");
+    const openai = await import("@livekit/agents-plugin-openai");
+    const deepgram = await import("@livekit/agents-plugin-deepgram");
+    const cartesia = await import("@livekit/agents-plugin-cartesia");
+    const { prisma } = await import("../src/lib/prisma");
+    
     console.log("--- Job Started ---");
     console.log("Connecting to room:", ctx.job.room?.name);
     
