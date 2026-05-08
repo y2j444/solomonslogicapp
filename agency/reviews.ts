@@ -3,11 +3,8 @@ import { prisma } from "../src/lib/prisma";
 export async function reviewAgent(task: string) {
   console.log("[Reviews] Preparing review request campaign...");
 
-  // Get the most recent contact who doesn't have a review request yet (simplified logic)
+  // Get the most recent contact (simplified logic)
   const contact = await prisma.contact.findFirst({
-    where: {
-      status: { not: "Review Requested" }
-    },
     orderBy: { createdAt: "desc" }
   });
 
