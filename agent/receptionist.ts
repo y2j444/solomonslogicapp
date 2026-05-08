@@ -15,7 +15,7 @@ export default defineAgent({
     const openai = await import("@livekit/agents-plugin-openai");
     const deepgram = await import("@livekit/agents-plugin-deepgram");
     const cartesia = await import("@livekit/agents-plugin-cartesia");
-    const { prisma } = await import("../src/lib/prisma");
+    const { prisma } = await import("../src/lib/prisma.js");
     
     console.log("--- Job Started ---");
     console.log("Connecting to room:", ctx.job.room?.name);
@@ -154,7 +154,7 @@ ${callHandlingRules}
 
               if (appointments.length === 0) return "You don't have any appointments scheduled currently.";
 
-              return appointments.map(a => 
+              return appointments.map((a: any) => 
                 `ID: ${a.id}, Time: ${a.startTime.toLocaleString()}, Note: ${a.notes || 'None'}`
               ).join("\n");
             } catch (error) {
@@ -281,7 +281,7 @@ ${callHandlingRules}
           ownerUserId: userRecord.id,
           appointmentStatus: "PendingReview",
         }
-      }).catch(e => console.error("Failed to create call log:", e));
+      }).catch((e: any) => console.error("Failed to create call log:", e));
     }
 
     const startTimeMillis = Date.now();

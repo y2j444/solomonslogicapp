@@ -5,7 +5,7 @@ import {
   type SmsMessage,
   type User,
 } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "./prisma.js";
 
 type SmsContext = {
   user: User;
