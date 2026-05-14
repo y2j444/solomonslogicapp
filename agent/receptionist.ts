@@ -73,7 +73,7 @@ export default defineAgent({
     const getCallerNumber = () => {
       const roomName = ctx.job.room?.name || "";
       const allNumbers = roomName.match(/\d{10,}/g) || [];
-      const callerNumber = allNumbers.find(n => !n.startsWith("1615")) || allNumbers[1] || allNumbers[0] || "Unknown";
+      const callerNumber = allNumbers.find((n: string) => !n.startsWith("1615")) || allNumbers[1] || allNumbers[0] || "Unknown";
       return callerNumber.startsWith("+") ? callerNumber : "+" + (callerNumber.startsWith("1") ? "" : "1") + callerNumber;
     };
 
