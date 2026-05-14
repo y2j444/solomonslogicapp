@@ -1,7 +1,6 @@
 console.log("RECEPTIONIST SUB-PROCESS INITIALIZING...");
 
-import { defineAgent, cli, ServerOptions } from "@livekit/agents";
-import { fileURLToPath } from "url";
+import { defineAgent } from "@livekit/agents";
 import dotenv from "dotenv";
 
 // Load environment variables for the sub-process
@@ -351,9 +350,3 @@ ${callHandlingRules}
     }
   },
 });
-
-// IMPORTANT: In multi-process mode, the sub-process MUST call runApp 
-// to start its own internal agent worker and keep the process alive.
-cli.runApp(new ServerOptions({
-  agent: fileURLToPath(import.meta.url),
-}));
