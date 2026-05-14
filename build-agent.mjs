@@ -12,14 +12,18 @@ async function build() {
     target: 'node20',
     outdir: 'dist/agent',
     format: 'esm',
+    banner: {
+      js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
+    },
     external: [
       '@prisma/client',
-      '@livekit/rtc-node', // Native dependency
-      'node:child_process',
-      'node:path',
-      'node:fs',
-      'node:url',
-      'node:events'
+      '@livekit/rtc-node',
+      'fs', 'node:fs',
+      'path', 'node:path',
+      'url', 'node:url',
+      'child_process', 'node:child_process',
+      'events', 'node:events',
+      'module', 'node:module'
     ],
     sourcemap: true,
     outExtension: { '.js': '.js' },
