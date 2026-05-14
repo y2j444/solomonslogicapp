@@ -322,7 +322,7 @@ ${callHandlingRules}
     session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (ev: any) => {
       if ('role' in ev.item && ev.item.role === "assistant" && ev.item.content) {
         const textContent = Array.isArray(ev.item.content) 
-          ? ev.item.content.map(c => (typeof c === 'object' && c !== null && 'text' in c) ? c.text : (typeof c === 'string' ? c : '')).join('')
+          ? ev.item.content.map((c: any) => (typeof c === 'object' && c !== null && 'text' in c) ? c.text : (typeof c === 'string' ? c : '')).join('')
           : ev.item.content;
         transcript.push({ role: "assistant", content: textContent as string });
         saveTranscript();
