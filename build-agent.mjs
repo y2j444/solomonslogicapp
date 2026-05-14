@@ -12,7 +12,15 @@ async function build() {
     target: 'node20',
     outdir: 'dist/agent',
     format: 'esm',
-    packages: 'external', // Don't bundle node_modules
+    external: [
+      '@prisma/client',
+      '@livekit/rtc-node', // Native dependency
+      'node:child_process',
+      'node:path',
+      'node:fs',
+      'node:url',
+      'node:events'
+    ],
     sourcemap: true,
     outExtension: { '.js': '.js' },
   });

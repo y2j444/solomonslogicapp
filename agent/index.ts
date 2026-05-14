@@ -26,6 +26,7 @@ cli.runApp(new ServerOptions({
   apiSecret: process.env.LIVEKIT_API_SECRET,
   host: "0.0.0.0",
   port: parseInt(process.env.PORT || "8081"),
-  initializeProcessTimeout: 300, // 5 minutes to allow for slow Railway initialization
+  numIdleProcesses: 0, // Disable idle processes for Railway stability
+  initializeProcessTimeout: 300, 
   loadThreshold: 0.85,
 }));

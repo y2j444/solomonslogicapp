@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 // Load environment variables for the sub-process
 dotenv.config();
 
-export default defineAgent({
+const agent = defineAgent({
   entry: async (ctx: any) => {
     // Top-level catch so crashes appear in Railway logs instead of silently orphaning the job
     try {
@@ -350,3 +350,6 @@ ${callHandlingRules}
     }
   },
 });
+
+console.log("RECEPTIONIST AGENT DEFINITION LOADED.");
+export default agent;
