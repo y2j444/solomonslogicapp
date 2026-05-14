@@ -4,6 +4,8 @@ import { defineAgent } from "@livekit/agents";
 
 export default defineAgent({
   entry: async (ctx: any) => {
+    // Top-level catch so crashes appear in Railway logs instead of silently orphaning the job
+    try {
     console.log("--- Job Started ---");
     console.log("[Debug] Loading Libraries...");
     
@@ -13,7 +15,9 @@ export default defineAgent({
     const openai = await import("@livekit/agents-plugin-openai");
     const deepgram = await import("@livekit/agents-plugin-deepgram");
     const cartesia = await import("@livekit/agents-plugin-cartesia");
-    const { prisma } = await import("../src/lib/prisma");
+    // In production: prisma.ts is compiled by esbuild into dist/agent/prisma.js alongside this file.
+    // In dev: tsx resolves this correctly from agent/ as well via the tsconfig paths.
+    const { prisma } = await import("./prisma.js");
     console.log("Connecting to room:", ctx.job.room?.name);
     
     try {
@@ -335,5 +339,10 @@ ${callHandlingRules}
       console.log("Session shutting down, saving final state...");
       await saveTranscript();
     });
+    } catch (fatalError) {
+      // Surface the real crash reason in Railway logs
+      console.error("[FATAL] Receptionist sub-process crashed:", fatalError);
+      throw fatalError;
+    }
   },
 });

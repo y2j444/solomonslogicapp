@@ -2,7 +2,11 @@ import * as esbuild from 'esbuild';
 
 async function build() {
   await esbuild.build({
-    entryPoints: ['agent/index.ts', 'agent/receptionist.ts'],
+    entryPoints: [
+      'agent/index.ts',
+      'agent/receptionist.ts',
+      'agent/prisma.ts',   // Proxy compiled to dist/agent/prisma.js so import("./prisma.js") resolves at runtime
+    ],
     bundle: true,
     platform: 'node',
     target: 'node20',
