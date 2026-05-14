@@ -307,7 +307,7 @@ ${callHandlingRules}
       }
     };
 
-    session.on(voice.AgentSessionEventTypes.UserInputTranscribed, (t: voice.UserInputTranscribedEvent) => {
+    session.on(voice.AgentSessionEventTypes.UserInputTranscribed, (t: any) => {
       const text = t.transcript?.trim();
       if (text) {
         const lastTurn = transcript[transcript.length - 1];
@@ -319,7 +319,7 @@ ${callHandlingRules}
         saveTranscript();
       }
     });
-    session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (ev: voice.ConversationItemAddedEvent) => {
+    session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (ev: any) => {
       if ('role' in ev.item && ev.item.role === "assistant" && ev.item.content) {
         const textContent = Array.isArray(ev.item.content) 
           ? ev.item.content.map(c => (typeof c === 'object' && c !== null && 'text' in c) ? c.text : (typeof c === 'string' ? c : '')).join('')
