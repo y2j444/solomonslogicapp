@@ -16,9 +16,11 @@ import fs from "fs";
 
 console.log("Launching Solomon Agent...");
 
-// Simple pathing: In production (dist), everything is in the same folder.
-// In dev, tsx handles the resolution.
-const agentPath = path.join(__dirname, "receptionist.js");
+// Dynamic pathing for Dev vs Production
+const isDev = !__filename.includes('dist');
+const agentFile = isDev ? "receptionist.ts" : "receptionist.js";
+const agentPath = path.join(__dirname, agentFile);
+console.log(`[Worker] Using agent path: ${agentPath}`);
 
 cli.runApp(new ServerOptions({
   agent: agentPath,
