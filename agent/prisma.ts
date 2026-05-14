@@ -7,4 +7,4 @@
  * - In dev, tsx runs from the `agent/` folder where `../src/lib/prisma` is the real path.
  *   This proxy file lets both environments use the same `"./prisma.js"` import path.
  */
-export { prisma } from "../src/lib/prisma.js";
+export { prisma } from "../src/lib/prisma";
