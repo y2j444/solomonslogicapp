@@ -16,7 +16,7 @@ console.log("Launching Solomon Agent...");
 // Dynamic pathing for Dev vs Production
 const isDev = !__filename.includes('dist');
 const agentFile = isDev ? "receptionist.ts" : "receptionist.js";
-const agentPath = path.join(__dirname, agentFile);
+const agentPath = pathToFileURL(path.join(__dirname, agentFile)).href;
 
 console.log(`[Worker] Starting in multi-process mode. Agent path: ${agentPath}`);
 
