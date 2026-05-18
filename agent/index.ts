@@ -26,7 +26,7 @@ cli.runApp(new ServerOptions({
   apiSecret: process.env.LIVEKIT_API_SECRET,
   host: "0.0.0.0",
   port: parseInt(process.env.PORT || "8081"),
-  numIdleProcesses: 0, // Disable idle processes for Railway stability
+  numIdleProcesses: -1, // MUST be -1 to bypass LiveKit's falsy check (0 || 3 evaluates to 3)
   initializeProcessTimeout: 300, 
   loadThreshold: 0.85,
 }));
