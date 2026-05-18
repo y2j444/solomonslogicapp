@@ -22,6 +22,7 @@ console.log(`[Worker] Starting in multi-process mode. Agent path: ${agentPath}`)
 
 cli.runApp(new ServerOptions({
   agent: agentPath,
+  agentName: "solomon", // Explicitly named for the Dispatch Rule
   apiKey: process.env.LIVEKIT_API_KEY,
   apiSecret: process.env.LIVEKIT_API_SECRET,
   host: "0.0.0.0",
