@@ -2,13 +2,6 @@ FROM node:20
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY package*.json ./
 RUN npm install
 
