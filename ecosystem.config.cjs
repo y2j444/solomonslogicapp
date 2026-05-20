@@ -1,9 +1,11 @@
+const isWin = process.platform === "win32";
+
 module.exports = {
   apps: [
     {
       name: "solomon-receptionist",
-      script: "npx",
-      args: "tsx agent/index.ts dev",
+      script: isWin ? "cmd" : "npx",
+      args: isWin ? "/c npx tsx agent/index.ts dev" : "tsx agent/index.ts dev",
       autorestart: true,
       watch: false,
       max_memory_restart: "1G",
@@ -14,8 +16,8 @@ module.exports = {
     },
     {
       name: "solomon-webapp",
-      script: "npm",
-      args: "run dev",
+      script: isWin ? "cmd" : "npm",
+      args: isWin ? "/c npm run dev" : "run dev",
       autorestart: true,
       watch: false,
       max_memory_restart: "2G",
