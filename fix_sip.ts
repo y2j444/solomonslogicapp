@@ -21,7 +21,7 @@ async function main() {
             const updated = await sipClient.updateSipInboundTrunkFields(trunk.sipTrunkId, {
                 numbers: {
                     set: ["+16157163328", "16157163328"]
-                }
+                } as any
             });
             console.log("Successfully updated trunk:", JSON.stringify(updated, null, 2));
         } else {

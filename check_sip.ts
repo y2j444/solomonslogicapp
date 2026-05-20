@@ -4,9 +4,9 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const sipClient = new SipClient(
-    process.env.LIVEKIT_URL,
-    process.env.LIVEKIT_API_KEY,
-    process.env.LIVEKIT_API_SECRET
+    process.env.LIVEKIT_URL || '',
+    process.env.LIVEKIT_API_KEY || '',
+    process.env.LIVEKIT_API_SECRET || ''
 );
 
 async function main() {
