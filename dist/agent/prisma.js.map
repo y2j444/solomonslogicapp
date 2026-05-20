@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/lib/prisma.ts"],
+  "sourcesContent": ["import { PrismaClient } from \"@prisma/client\";\n\nconst globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };\n\nexport const prisma =\n  globalForPrisma.prisma ??\n  new PrismaClient({\n    log: process.env.NODE_ENV === \"development\" ? [\"error\", \"warn\"] : [\"error\"],\n  });\n\nif (process.env.NODE_ENV !== \"production\") {\n  globalForPrisma.prisma = prisma;\n}\n"],
+  "mappings": ";AAAA,SAAS,oBAAoB;AAE7B,IAAM,kBAAkB;AAEjB,IAAM,SACX,gBAAgB,UAChB,IAAI,aAAa;AAAA,EACf,KAAK,QAAQ,IAAI,aAAa,gBAAgB,CAAC,SAAS,MAAM,IAAI,CAAC,OAAO;AAC5E,CAAC;AAEH,IAAI,QAAQ,IAAI,aAAa,cAAc;AACzC,kBAAgB,SAAS;AAC3B;",
+  "names": []
+}

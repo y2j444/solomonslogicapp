@@ -22,6 +22,22 @@ const agent = defineAgent({
     // In production: prisma.ts is compiled by esbuild into dist/agent/prisma.js alongside this file.
     // In dev: tsx resolves this correctly from agent/ as well via the tsconfig paths.
     const { prisma } = await import("./prisma.js");
+
+    // Validate required environment variables
+    const requiredEnvVars = [
+      "DATABASE_URL",
+      "LIVEKIT_URL",
+      "LIVEKIT_API_KEY",
+      "LIVEKIT_API_SECRET",
+      "DEEPGRAM_API_KEY",
+      "CARTESIA_API_KEY",
+      "OPENAI_API_KEY",
+    ];
+    const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
+    if (missingVars.length > 0) {
+      throw new Error(`Missing required environment variable(s): ${missingVars.join(", ")}. Please configure them in your hosting environment (e.g., Railway dashboard).`);
+    }
+
     console.log("Connecting to room:", ctx.job.room?.name);
     
     try {
