@@ -312,8 +312,8 @@ ${callHandlingRules}
       turnHandling: {
         preemptiveGeneration: { enabled: false },
         interruption: {
-          minDuration: 800,
-          minWords: 2,
+          minDuration: 700,
+          minWords: 0,
           resumeFalseInterruption: true,
           falseInterruptionTimeout: 2500,
         },
@@ -411,16 +411,54 @@ ${callHandlingRules}
       }
     });
 
+    console.log("[Room] Waiting for caller to join...");
+    try {
+      const participant = await Promise.race([
+        ctx.waitForParticipant(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Caller did not join within 45s")), 45_000)
+        ),
+      ]);
+      console.log("[Room] Caller connected:", participant.identity);
+    } catch (waitErr) {
+      console.error("[Room] Caller never joined:", waitErr);
+      return;
+    }
+
     await session.start({ agent, room: ctx.room });
     console.log("Agent started!");
-    
-    session.say(`Hi, thanks for calling ${businessName}. This is Sara, how can I help you?`);
 
+    const greetingHandle = session.say(
+      `Hi, thanks for calling ${businessName}. This is Sara, how can I help you?`
+    );
+    try {
+      await greetingHandle.waitForPlayout();
+      console.log("[Agent] Greeting finished speaking");
+    } catch (sayErr) {
+      console.error("[Agent] Greeting playout failed:", sayErr);
+    }
+
+    const startHeartbeat = Date.now();
+    const heartbeat = setInterval(() => {
+      console.log("[Job] heartbeat", {
+        elapsedSec: Math.floor((Date.now() - startHeartbeat) / 1000),
+      });
+    }, 10_000);
 
     ctx.addShutdownCallback(async () => {
+      clearInterval(heartbeat);
       console.log("Session shutting down, saving final state...");
       await flushTranscript();
+      await prisma.$disconnect().catch(() => {});
     });
+
+    await new Promise<void>((resolve) => {
+      session.on(voice.AgentSessionEventTypes.Close, () => {
+        console.log("[Session] Close received — ending job entry");
+        resolve();
+      });
+    });
+    console.log("[Job] Entry complete");
     } catch (fatalError) {
       // Surface the real crash reason in Railway logs
       console.error("[FATAL] Receptionist sub-process crashed:", fatalError);

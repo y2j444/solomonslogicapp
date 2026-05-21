@@ -35,7 +35,8 @@ cli.runApp(
     port: parseInt(process.env.PORT || "8081"),
     production: isProduction,
     numIdleProcesses,
-    initializeProcessTimeout: 300,
+    // LiveKit uses milliseconds (default 10_000). 300 was only 0.3s and caused flaky child init.
+    initializeProcessTimeout: 12e4,
     shutdownProcessTimeout: 12e4
   })
 );
