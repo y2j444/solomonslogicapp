@@ -56,6 +56,14 @@ const agent = defineAgent({
       return;
     }
 
+    const { RoomEvent } = await import("@livekit/rtc-node");
+    ctx.room.on(RoomEvent.ParticipantDisconnected, (participant: { identity?: string }) => {
+      console.log("[Room] Participant disconnected:", participant?.identity ?? "unknown");
+    });
+    ctx.room.on(RoomEvent.Disconnected, () => {
+      console.log("[Room] Room disconnected");
+    });
+
     let businessName = "Solomon's Logic";
     let knowledgeBase = "No specific knowledge base provided.";
     let callHandlingRules = "Help the user by answering their questions.";
@@ -299,9 +307,16 @@ ${callHandlingRules}
       llm: new openai.LLM({
         model: "gpt-4o-mini",
       }),
-      // Preemptive generation races with barge-in + tool calls and can trigger Cartesia errors.
+      // Aligned transcript sync races on barge-in (rotateSegment warnings, cut-off audio).
+      useTtsAlignedTranscript: false,
       turnHandling: {
         preemptiveGeneration: { enabled: false },
+        interruption: {
+          minDuration: 800,
+          minWords: 2,
+          resumeFalseInterruption: true,
+          falseInterruptionTimeout: 2500,
+        },
       },
     });
 
@@ -353,6 +368,7 @@ ${callHandlingRules}
       await saveTranscriptNow();
     };
 
+    // Debounced DB writes only — avoid blocking the job process during active speech.
     const scheduleTranscriptSave = () => {
       if (!userRecord) return;
       if (transcriptSaveTimer) clearTimeout(transcriptSaveTimer);
@@ -361,7 +377,7 @@ ${callHandlingRules}
         transcriptSaveInFlight = saveTranscriptNow().finally(() => {
           transcriptSaveInFlight = null;
         });
-      }, 2000);
+      }, 5000);
     };
 
     session.on(voice.AgentSessionEventTypes.Error, (ev) => {
@@ -381,8 +397,6 @@ ${callHandlingRules}
           transcript.push({ role: "user", content: text });
         }
         if (t.isFinal) {
-          void flushTranscript();
-        } else {
           scheduleTranscriptSave();
         }
       }

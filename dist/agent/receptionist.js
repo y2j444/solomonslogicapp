@@ -79,6 +79,13 @@ var agent = defineAgent({
         console.error("Failed to connect to room:", error);
         return;
       }
+      const { RoomEvent } = await import("@livekit/rtc-node");
+      ctx.room.on(RoomEvent.ParticipantDisconnected, (participant) => {
+        console.log("[Room] Participant disconnected:", participant?.identity ?? "unknown");
+      });
+      ctx.room.on(RoomEvent.Disconnected, () => {
+        console.log("[Room] Room disconnected");
+      });
       let businessName = "Solomon's Logic";
       let knowledgeBase = "No specific knowledge base provided.";
       let callHandlingRules = "Help the user by answering their questions.";
@@ -299,9 +306,16 @@ ${callHandlingRules}
         llm: new openai.LLM({
           model: "gpt-4o-mini"
         }),
-        // Preemptive generation races with barge-in + tool calls and can trigger Cartesia errors.
+        // Aligned transcript sync races on barge-in (rotateSegment warnings, cut-off audio).
+        useTtsAlignedTranscript: false,
         turnHandling: {
-          preemptiveGeneration: { enabled: false }
+          preemptiveGeneration: { enabled: false },
+          interruption: {
+            minDuration: 800,
+            minWords: 2,
+            resumeFalseInterruption: true,
+            falseInterruptionTimeout: 2500
+          }
         }
       });
       if (userRecord) {
@@ -351,7 +365,7 @@ ${callHandlingRules}
           transcriptSaveInFlight = saveTranscriptNow().finally(() => {
             transcriptSaveInFlight = null;
           });
-        }, 2e3);
+        }, 5e3);
       };
       session.on(voice.AgentSessionEventTypes.Error, (ev) => {
         console.error("[Session] Error:", ev.error, "source:", ev.source);
@@ -369,8 +383,6 @@ ${callHandlingRules}
             transcript.push({ role: "user", content: text });
           }
           if (t.isFinal) {
-            void flushTranscript();
-          } else {
             scheduleTranscriptSave();
           }
         }
