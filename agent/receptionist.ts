@@ -8,6 +8,14 @@ dotenv.config();
 
 const agent = defineAgent({
   entry: async (ctx: any) => {
+    // Catch floating background errors that bypass the main try/catch
+    process.on('uncaughtException', (err) => {
+      console.error("[FATAL] Uncaught Exception in background task:", err);
+    });
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error("[FATAL] Unhandled Rejection at:", promise, "reason:", reason);
+    });
+
     // Top-level catch so crashes appear in Railway logs instead of silently orphaning the job
     try {
     console.log("--- Job Started ---");
