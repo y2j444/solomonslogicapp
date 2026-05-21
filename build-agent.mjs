@@ -6,6 +6,7 @@ async function build() {
       'agent/index.ts',
       'agent/receptionist.ts',
       'agent/prisma.ts',
+      'agent/appointment-time.ts',
     ],
     bundle: true,
     platform: 'node',

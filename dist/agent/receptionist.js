@@ -36,6 +36,83 @@ var init_prisma2 = __esm({
   }
 });
 
+// src/lib/appointment-time.ts
+function getBusinessTimeZone() {
+  return process.env.BUSINESS_TIMEZONE?.trim() || DEFAULT_BUSINESS_TIMEZONE;
+}
+function parseAppointmentDate(rawValue, timeZone = getBusinessTimeZone()) {
+  const value = rawValue.trim().replace(/Z$/i, "");
+  if (/[+-]\d{2}:?\d{2}$/.test(value)) {
+    return new Date(value);
+  }
+  const bare = new Date(value);
+  if (Number.isNaN(bare.getTime())) return bare;
+  const tzOffset = getTimezoneOffsetMs(timeZone, bare);
+  return new Date(bare.getTime() + tzOffset);
+}
+function getTimezoneOffsetMs(timeZone, date) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    }).formatToParts(date);
+    const get = (type) => parseInt(parts.find((p) => p.type === type)?.value ?? "0", 10);
+    const localDate = new Date(
+      Date.UTC(
+        get("year"),
+        get("month") - 1,
+        get("day"),
+        get("hour") % 24,
+        get("minute"),
+        get("second")
+      )
+    );
+    return date.getTime() - localDate.getTime();
+  } catch {
+    return 0;
+  }
+}
+function formatAppointmentDate(date, timeZone = getBusinessTimeZone()) {
+  return date.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+    timeZoneName: "short"
+  });
+}
+var DEFAULT_BUSINESS_TIMEZONE;
+var init_appointment_time = __esm({
+  "src/lib/appointment-time.ts"() {
+    "use strict";
+    DEFAULT_BUSINESS_TIMEZONE = "America/Chicago";
+  }
+});
+
+// agent/appointment-time.ts
+var appointment_time_exports = {};
+__export(appointment_time_exports, {
+  DEFAULT_BUSINESS_TIMEZONE: () => DEFAULT_BUSINESS_TIMEZONE,
+  formatAppointmentDate: () => formatAppointmentDate,
+  getBusinessTimeZone: () => getBusinessTimeZone,
+  parseAppointmentDate: () => parseAppointmentDate
+});
+var init_appointment_time2 = __esm({
+  "agent/appointment-time.ts"() {
+    "use strict";
+    init_appointment_time();
+  }
+});
+
 // agent/receptionist.ts
 import { defineAgent } from "@livekit/agents";
 import dotenv from "dotenv";
@@ -58,6 +135,8 @@ var agent = defineAgent({
       const deepgram = await import("@livekit/agents-plugin-deepgram");
       const cartesia = await import("@livekit/agents-plugin-cartesia");
       const { prisma: prisma2 } = await Promise.resolve().then(() => (init_prisma2(), prisma_exports));
+      const { parseAppointmentDate: parseAppointmentDate2, formatAppointmentDate: formatAppointmentDate2, getBusinessTimeZone: getBusinessTimeZone2 } = await Promise.resolve().then(() => (init_appointment_time2(), appointment_time_exports));
+      const businessTz = getBusinessTimeZone2();
       const requiredEnvVars = [
         "DATABASE_URL",
         "LIVEKIT_URL",
@@ -140,8 +219,11 @@ Personality & Tone:
   2. Use 'update_appointment' to apply the change.
 - Never create a new appointment if they are just trying to move an existing one.
 
-Today's Date: ${(/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-Current Time: ${(/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}
+Business timezone: ${businessTz} (all appointment times are in this zone)
+Today's Date: ${(/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: businessTz })}
+Current Time: ${(/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: businessTz, timeZoneName: "short" })}
+
+When calling booking tools, use ISO times for ${businessTz} \u2014 e.g. 2025-05-22T16:30:00-05:00 for 4:30 PM Central, or 2025-05-22T16:30:00 (no Z suffix).
 
 Business Knowledge:
 ${knowledgeBase}
@@ -157,12 +239,14 @@ ${callHandlingRules}
           check_availability: llm.tool({
             description: "Check if a specific date and time is available for an appointment.",
             parameters: z.object({
-              startTime: z.string().describe("The ISO 8601 date and time to check (e.g., 2025-05-01T10:00:00).")
+              startTime: z.string().describe(
+                `ISO 8601 start time in ${businessTz} (e.g. 2025-05-22T16:30:00-05:00 for 4:30 PM). Do not use Z unless it is true UTC.`
+              )
             }),
             execute: async ({ startTime }) => {
               try {
-                console.log("Checking availability for:", startTime);
-                const requestedStart = new Date(startTime);
+                console.log("Checking availability for:", startTime, "tz:", businessTz);
+                const requestedStart = parseAppointmentDate2(startTime, businessTz);
                 const requestedEnd = new Date(requestedStart.getTime() + 30 * 6e4);
                 const conflict = await prisma2.appointment.findFirst({
                   where: {
@@ -201,7 +285,7 @@ ${callHandlingRules}
                 });
                 if (appointments.length === 0) return "You don't have any appointments scheduled currently.";
                 return appointments.map(
-                  (a) => `ID: ${a.id}, Time: ${a.startTime.toLocaleString()}, Note: ${a.notes || "None"}`
+                  (a) => `ID: ${a.id}, Time: ${formatAppointmentDate2(a.startTime, businessTz)}, Note: ${a.notes || "None"}`
                 ).join("\n");
               } catch (error) {
                 console.error("Lookup failed:", error);
@@ -212,14 +296,16 @@ ${callHandlingRules}
           book_appointment: llm.tool({
             description: "Book an appointment for the customer.",
             parameters: z.object({
-              startTime: z.string().describe("The ISO 8601 date and time for the appointment."),
+              startTime: z.string().describe(
+                `ISO 8601 start time in ${businessTz} (e.g. 2025-05-22T16:30:00-05:00 for 4:30 PM). Do not use Z unless it is true UTC.`
+              ),
               customerName: z.string().describe("The full name of the customer."),
               notes: z.string().optional().describe("Any additional notes for the appointment.")
             }),
             execute: async ({ startTime, customerName, notes }) => {
               try {
-                console.log("Booking appointment for:", customerName, "at", startTime);
-                const appointmentDate = new Date(startTime);
+                console.log("Booking appointment for:", customerName, "at", startTime, "tz:", businessTz);
+                const appointmentDate = parseAppointmentDate2(startTime, businessTz);
                 const normalizedPhone = getCallerNumber();
                 let contact = await prisma2.contact.findFirst({
                   where: { ownerUserId: userRecord?.id || "", phone: normalizedPhone }
@@ -241,7 +327,7 @@ ${callHandlingRules}
                 });
                 if (existingAppt) {
                   console.log("Existing appointment found, skipping duplicate creation.");
-                  return `The appointment for ${customerName} at ${startTime} is already on the calendar! I've confirmed it's all set.`;
+                  return `The appointment for ${customerName} at ${formatAppointmentDate2(appointmentDate, businessTz)} is already on the calendar! I've confirmed it's all set.`;
                 }
                 const appointment = await prisma2.appointment.create({
                   data: {
@@ -261,7 +347,7 @@ ${callHandlingRules}
                   }
                 }).catch(() => {
                 });
-                return `Success! The appointment is booked for ${customerName} at ${startTime}.`;
+                return `Success! The appointment is booked for ${customerName} at ${formatAppointmentDate2(appointmentDate, businessTz)}.`;
               } catch (error) {
                 console.error("Booking failed:", error);
                 return "I'm sorry, I hit a snag while saving your appointment. Could you try one more time?";
@@ -272,20 +358,22 @@ ${callHandlingRules}
             description: "Update an existing appointment for the customer (e.g., reschedule).",
             parameters: z.object({
               existingAppointmentId: z.string().describe("The ID of the appointment to update."),
-              newStartTime: z.string().optional().describe("The new ISO 8601 date and time."),
+              newStartTime: z.string().optional().describe(
+                `New ISO 8601 start time in ${businessTz}. Do not use Z unless it is true UTC.`
+              ),
               notes: z.string().optional().describe("Updated notes.")
             }),
             execute: async ({ existingAppointmentId, newStartTime, notes }) => {
               try {
                 console.log("Updating appointment:", existingAppointmentId);
                 const updateData = {};
-                if (newStartTime) updateData.startTime = new Date(newStartTime);
+                if (newStartTime) updateData.startTime = parseAppointmentDate2(newStartTime, businessTz);
                 if (notes) updateData.notes = notes;
                 const appointment = await prisma2.appointment.update({
                   where: { id: existingAppointmentId },
                   data: updateData
                 });
-                return `Success! I've updated the appointment. It is now scheduled for ${appointment.startTime.toLocaleString()}.`;
+                return `Success! I've updated the appointment. It is now scheduled for ${formatAppointmentDate2(appointment.startTime, businessTz)}.`;
               } catch (error) {
                 console.error("Update failed:", error);
                 return "I couldn't find that appointment to update. Could you give me the details again?";

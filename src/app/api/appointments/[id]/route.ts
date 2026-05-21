@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseAppointmentDate } from "@/lib/appointment-time";
 import { getCurrentUserRecord } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { AppointmentStatus, AppointmentType } from "@prisma/client";
@@ -25,7 +26,9 @@ export async function PATCH(
       where: { id },
       data: {
         title: body.title ?? existing.title,
-        startTime: body.startTime ? new Date(body.startTime) : existing.startTime,
+        startTime: body.startTime
+          ? parseAppointmentDate(body.startTime)
+          : existing.startTime,
         durationMinutes: body.durationMinutes ?? existing.durationMinutes,
         status: (body.status as AppointmentStatus) ?? existing.status,
         type: (body.type as AppointmentType) ?? existing.type,

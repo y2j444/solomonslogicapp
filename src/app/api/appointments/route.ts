@@ -4,6 +4,10 @@ import {
   CallAppointmentStatus,
   CallDirection,
 } from "@prisma/client";
+import {
+  formatAppointmentDate,
+  parseAppointmentDate,
+} from "@/lib/appointment-time";
 import { getCurrentUserRecord } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 
@@ -92,79 +96,10 @@ function isValidDate(value: string) {
   return !Number.isNaN(date.getTime());
 }
 
-/**
- * If the AI sends a date without a timezone offset (e.g. "2025-05-01T10:00:00"),
- * JavaScript treats it as UTC which can make "tomorrow 10am CST" look like the past.
- * We detect bare local-looking strings and re-interpret them in the business timezone.
- */
-function parseAppointmentDate(rawValue: string, timeZone = "America/Chicago"): Date {
-  // The AI often incorrectly appends 'Z' (UTC) to what is actually a local wall-clock time.
-  // Strip the trailing 'Z' so we treat it as a bare local string and offset it correctly.
-  const value = rawValue.trim().replace(/Z$/i, "");
-
-  // Already has an explicit offset (e.g. -05:00) — trust it directly
-  if (/[+-]\d{2}:?\d{2}$/.test(value)) {
-    return new Date(value);
-  }
-
-  // Bare ISO-like string — reinterpret in business timezone
-  try {
-    const { Temporal } = Intl as unknown as { Temporal?: unknown };
-    void Temporal; // only here if available; fall through otherwise
-  } catch { /* ignore */ }
-
-  // Use Intl.DateTimeFormat trick to shift bare date into the correct timezone
-  const bare = new Date(value);
-  if (Number.isNaN(bare.getTime())) return bare; // let caller handle NaN
-
-  // Re-express the bare date as if it were local time in the target timezone
-  const utcMs = bare.getTime();
-  const tzOffset = getTimezoneOffsetMs(timeZone, bare);
-  return new Date(utcMs + tzOffset);
-}
-
-function getTimezoneOffsetMs(timeZone: string, date: Date): number {
-  try {
-    // Get what UTC time corresponds to the given wall-clock in the target zone
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    }).formatToParts(date);
-
-    const get = (type: string) =>
-      parseInt(parts.find((p) => p.type === type)?.value ?? "0", 10);
-
-    const localDate = new Date(
-      Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"), get("second"))
-    );
-    return date.getTime() - localDate.getTime();
-  } catch {
-    return 0;
-  }
-}
-
 function isPastAppointment(date: Date) {
   // Use a 2-hour grace window to account for timezone ambiguity in natural language dates
   const graceMs = 2 * 60 * 60 * 1000;
   return date.getTime() < Date.now() - graceMs;
-}
-
-function formatAppointmentDate(date: Date) {
-  return date.toLocaleString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
 }
 
 function vapiResult(toolCallId: string | undefined, result: string, status = 200) {
