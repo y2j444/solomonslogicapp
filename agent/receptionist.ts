@@ -288,15 +288,21 @@ ${callHandlingRules}
 
     const transcript: { role: string; content: string }[] = [];
 
-    console.log("Using Cartesia Voice ID:", process.env.CARTESIA_VOICE_ID || "Default (None)");
+    const cartesiaVoiceId = process.env.CARTESIA_VOICE_ID?.trim();
+    console.log(
+      "Using Cartesia Voice ID:",
+      cartesiaVoiceId || "plugin default (set CARTESIA_VOICE_ID in Railway for a custom voice)"
+    );
     const session = new voice.AgentSession({
       stt: new deepgram.STT(),
-      tts: new cartesia.TTS(
-        process.env.CARTESIA_VOICE_ID ? { voice: process.env.CARTESIA_VOICE_ID } : {}
-      ),
+      tts: new cartesia.TTS(cartesiaVoiceId ? { voice: cartesiaVoiceId } : {}),
       llm: new openai.LLM({
         model: "gpt-4o-mini",
       }),
+      // Preemptive generation races with barge-in + tool calls and can trigger Cartesia errors.
+      turnHandling: {
+        preemptiveGeneration: { enabled: false },
+      },
     });
 
     // Create initial call log
@@ -313,27 +319,57 @@ ${callHandlingRules}
     }
 
     const startTimeMillis = Date.now();
-    const saveTranscript = async () => {
-      if (userRecord) {
-        try {
-          console.log(`[Logging] Saving ${transcript.length} turns to DB...`);
-          const summary = transcript.length > 0 
+    let transcriptSaveTimer: ReturnType<typeof setTimeout> | null = null;
+    let transcriptSaveInFlight: Promise<void> | null = null;
+
+    const saveTranscriptNow = async () => {
+      if (!userRecord) return;
+      try {
+        const summary =
+          transcript.length > 0
             ? `Conversation with ${getCallerNumber()}. ${transcript.length} messages exchanged.`
             : "No dialog recorded.";
 
-          await prisma.callLog.update({
-            where: { callSid: ctx.job.id },
-            data: {
-              transcript: transcript as any,
-              aiSummary: summary,
-              durationSeconds: Math.floor((Date.now() - startTimeMillis) / 1000),
-            }
-          });
-        } catch (e) {
-          // Silent fail for background logging
-        }
+        await prisma.callLog.update({
+          where: { callSid: ctx.job.id },
+          data: {
+            transcript: transcript as any,
+            aiSummary: summary,
+            durationSeconds: Math.floor((Date.now() - startTimeMillis) / 1000),
+          },
+        });
+        console.log(`[Logging] Saved ${transcript.length} turns to DB`);
+      } catch (e) {
+        console.error("[Logging] Failed to save transcript:", e);
       }
     };
+
+    const flushTranscript = async () => {
+      if (transcriptSaveTimer) {
+        clearTimeout(transcriptSaveTimer);
+        transcriptSaveTimer = null;
+      }
+      if (transcriptSaveInFlight) await transcriptSaveInFlight;
+      await saveTranscriptNow();
+    };
+
+    const scheduleTranscriptSave = () => {
+      if (!userRecord) return;
+      if (transcriptSaveTimer) clearTimeout(transcriptSaveTimer);
+      transcriptSaveTimer = setTimeout(() => {
+        transcriptSaveTimer = null;
+        transcriptSaveInFlight = saveTranscriptNow().finally(() => {
+          transcriptSaveInFlight = null;
+        });
+      }, 2000);
+    };
+
+    session.on(voice.AgentSessionEventTypes.Error, (ev) => {
+      console.error("[Session] Error:", ev.error, "source:", ev.source);
+    });
+    session.on(voice.AgentSessionEventTypes.Close, (ev) => {
+      console.log("[Session] Closed:", ev.reason, ev.error ?? "");
+    });
 
     session.on(voice.AgentSessionEventTypes.UserInputTranscribed, (t: any) => {
       const text = t.transcript?.trim();
@@ -344,7 +380,11 @@ ${callHandlingRules}
         } else if (t.isFinal || !lastTurn || lastTurn.role !== "user") {
           transcript.push({ role: "user", content: text });
         }
-        saveTranscript();
+        if (t.isFinal) {
+          void flushTranscript();
+        } else {
+          scheduleTranscriptSave();
+        }
       }
     });
     session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (ev: any) => {
@@ -353,7 +393,7 @@ ${callHandlingRules}
           ? ev.item.content.map((c: any) => (typeof c === 'object' && c !== null && 'text' in c) ? c.text : (typeof c === 'string' ? c : '')).join('')
           : ev.item.content;
         transcript.push({ role: "assistant", content: textContent as string });
-        saveTranscript();
+        scheduleTranscriptSave();
       }
     });
 
@@ -365,7 +405,7 @@ ${callHandlingRules}
 
     ctx.addShutdownCallback(async () => {
       console.log("Session shutting down, saving final state...");
-      await saveTranscript();
+      await flushTranscript();
     });
     } catch (fatalError) {
       // Surface the real crash reason in Railway logs
