@@ -22,9 +22,20 @@ const isDev = !__filename.includes("dist");
 const agentFile = isDev ? "receptionist.ts" : "receptionist.js";
 const agentPath = path.join(__dirname, agentFile);
 
+// -1 disables the warm process pool. In JS, 0 is treated as "use default" (4 idle procs).
+// A stale/dead warmed proc causes ERR_IPC_CHANNEL_CLOSED and the whole worker crashes (no answer).
+const numIdleProcesses = -1;
+
 console.log(
-  `[Worker] Agent path: ${agentPath} (production=${isProduction}, idleProcesses=${isProduction ? 1 : 0})`
+  `[Worker] Agent path: ${agentPath} (production=${isProduction}, idleProcesses=${numIdleProcesses})`
 );
+
+process.on("uncaughtException", (err) => {
+  console.error("[Worker] uncaughtException:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[Worker] unhandledRejection:", reason);
+});
 
 cli.runApp(
   new ServerOptions({
@@ -35,8 +46,8 @@ cli.runApp(
     host: "0.0.0.0",
     port: parseInt(process.env.PORT || "8081"),
     production: isProduction,
-    // Reuse one warmed job process in production (avoids cold-start races / orphaned IPC).
-    numIdleProcesses: isProduction ? 1 : 0,
+    numIdleProcesses,
     initializeProcessTimeout: 300,
+    shutdownProcessTimeout: 120_000,
   })
 );

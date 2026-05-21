@@ -14,9 +14,16 @@ console.log("Launching Solomon Agent...");
 var isDev = !__filename.includes("dist");
 var agentFile = isDev ? "receptionist.ts" : "receptionist.js";
 var agentPath = path.join(__dirname, agentFile);
+var numIdleProcesses = -1;
 console.log(
-  `[Worker] Agent path: ${agentPath} (production=${isProduction}, idleProcesses=${isProduction ? 1 : 0})`
+  `[Worker] Agent path: ${agentPath} (production=${isProduction}, idleProcesses=${numIdleProcesses})`
 );
+process.on("uncaughtException", (err) => {
+  console.error("[Worker] uncaughtException:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[Worker] unhandledRejection:", reason);
+});
 cli.runApp(
   new ServerOptions({
     agent: agentPath,
@@ -27,9 +34,9 @@ cli.runApp(
     host: "0.0.0.0",
     port: parseInt(process.env.PORT || "8081"),
     production: isProduction,
-    // Reuse one warmed job process in production (avoids cold-start races / orphaned IPC).
-    numIdleProcesses: isProduction ? 1 : 0,
-    initializeProcessTimeout: 300
+    numIdleProcesses,
+    initializeProcessTimeout: 300,
+    shutdownProcessTimeout: 12e4
   })
 );
 //# sourceMappingURL=index.js.map
