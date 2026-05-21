@@ -43,6 +43,12 @@ console.log("RECEPTIONIST SUB-PROCESS INITIALIZING...");
 dotenv.config();
 var agent = defineAgent({
   entry: async (ctx) => {
+    process.on("uncaughtException", (err) => {
+      console.error("[FATAL] Uncaught Exception in background task:", err);
+    });
+    process.on("unhandledRejection", (reason, promise) => {
+      console.error("[FATAL] Unhandled Rejection at:", promise, "reason:", reason);
+    });
     try {
       console.log("--- Job Started ---");
       console.log("[Debug] Loading Libraries...");
@@ -282,15 +288,21 @@ ${callHandlingRules}
         }
       });
       const transcript = [];
-      console.log("Using Cartesia Voice ID:", process.env.CARTESIA_VOICE_ID || "Default (None)");
+      const cartesiaVoiceId = process.env.CARTESIA_VOICE_ID?.trim();
+      console.log(
+        "Using Cartesia Voice ID:",
+        cartesiaVoiceId || "plugin default (set CARTESIA_VOICE_ID in Railway for a custom voice)"
+      );
       const session = new voice.AgentSession({
         stt: new deepgram.STT(),
-        tts: new cartesia.TTS(
-          process.env.CARTESIA_VOICE_ID ? { voice: process.env.CARTESIA_VOICE_ID } : {}
-        ),
+        tts: new cartesia.TTS(cartesiaVoiceId ? { voice: cartesiaVoiceId } : {}),
         llm: new openai.LLM({
           model: "gpt-4o-mini"
-        })
+        }),
+        // Preemptive generation races with barge-in + tool calls and can trigger Cartesia errors.
+        turnHandling: {
+          preemptiveGeneration: { enabled: false }
+        }
       });
       if (userRecord) {
         await prisma2.callLog.create({
@@ -304,23 +316,49 @@ ${callHandlingRules}
         }).catch((e) => console.error("Failed to create call log:", e));
       }
       const startTimeMillis = Date.now();
-      const saveTranscript = async () => {
-        if (userRecord) {
-          try {
-            console.log(`[Logging] Saving ${transcript.length} turns to DB...`);
-            const summary = transcript.length > 0 ? `Conversation with ${getCallerNumber()}. ${transcript.length} messages exchanged.` : "No dialog recorded.";
-            await prisma2.callLog.update({
-              where: { callSid: ctx.job.id },
-              data: {
-                transcript,
-                aiSummary: summary,
-                durationSeconds: Math.floor((Date.now() - startTimeMillis) / 1e3)
-              }
-            });
-          } catch (e) {
-          }
+      let transcriptSaveTimer = null;
+      let transcriptSaveInFlight = null;
+      const saveTranscriptNow = async () => {
+        if (!userRecord) return;
+        try {
+          const summary = transcript.length > 0 ? `Conversation with ${getCallerNumber()}. ${transcript.length} messages exchanged.` : "No dialog recorded.";
+          await prisma2.callLog.update({
+            where: { callSid: ctx.job.id },
+            data: {
+              transcript,
+              aiSummary: summary,
+              durationSeconds: Math.floor((Date.now() - startTimeMillis) / 1e3)
+            }
+          });
+          console.log(`[Logging] Saved ${transcript.length} turns to DB`);
+        } catch (e) {
+          console.error("[Logging] Failed to save transcript:", e);
         }
       };
+      const flushTranscript = async () => {
+        if (transcriptSaveTimer) {
+          clearTimeout(transcriptSaveTimer);
+          transcriptSaveTimer = null;
+        }
+        if (transcriptSaveInFlight) await transcriptSaveInFlight;
+        await saveTranscriptNow();
+      };
+      const scheduleTranscriptSave = () => {
+        if (!userRecord) return;
+        if (transcriptSaveTimer) clearTimeout(transcriptSaveTimer);
+        transcriptSaveTimer = setTimeout(() => {
+          transcriptSaveTimer = null;
+          transcriptSaveInFlight = saveTranscriptNow().finally(() => {
+            transcriptSaveInFlight = null;
+          });
+        }, 2e3);
+      };
+      session.on(voice.AgentSessionEventTypes.Error, (ev) => {
+        console.error("[Session] Error:", ev.error, "source:", ev.source);
+      });
+      session.on(voice.AgentSessionEventTypes.Close, (ev) => {
+        console.log("[Session] Closed:", ev.reason, ev.error ?? "");
+      });
       session.on(voice.AgentSessionEventTypes.UserInputTranscribed, (t) => {
         const text = t.transcript?.trim();
         if (text) {
@@ -330,14 +368,18 @@ ${callHandlingRules}
           } else if (t.isFinal || !lastTurn || lastTurn.role !== "user") {
             transcript.push({ role: "user", content: text });
           }
-          saveTranscript();
+          if (t.isFinal) {
+            void flushTranscript();
+          } else {
+            scheduleTranscriptSave();
+          }
         }
       });
       session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (ev) => {
         if ("role" in ev.item && ev.item.role === "assistant" && ev.item.content) {
           const textContent = Array.isArray(ev.item.content) ? ev.item.content.map((c) => typeof c === "object" && c !== null && "text" in c ? c.text : typeof c === "string" ? c : "").join("") : ev.item.content;
           transcript.push({ role: "assistant", content: textContent });
-          saveTranscript();
+          scheduleTranscriptSave();
         }
       });
       await session.start({ agent: agent2, room: ctx.room });
@@ -345,7 +387,7 @@ ${callHandlingRules}
       session.say(`Hi, thanks for calling ${businessName}. This is Sara, how can I help you?`);
       ctx.addShutdownCallback(async () => {
         console.log("Session shutting down, saving final state...");
-        await saveTranscript();
+        await flushTranscript();
       });
     } catch (fatalError) {
       console.error("[FATAL] Receptionist sub-process crashed:", fatalError);
