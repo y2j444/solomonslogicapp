@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); 
+dotenv.config({ override: true }); 
 
 import { cli, ServerOptions } from "@livekit/agents";
 import path from "path";
