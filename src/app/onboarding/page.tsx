@@ -72,8 +72,16 @@ export default function OnboardingPage() {
         <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[#355cc9] text-xl font-bold text-white shadow-lg shadow-blue-500/20">
           S
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Welcome to Solomon's Logic</h1>
-        <p className="mt-2 text-zinc-500">Let's set up your business profile to get started.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Welcome to Solomon's Logic 🎉</h1>
+        <p className="mt-2 text-zinc-500">You're 3 minutes away from never missing a call again.</p>
+      </div>
+
+      <div className="mb-6 flex items-center gap-3 text-xs text-zinc-500">
+        <div className="flex items-center gap-1.5"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#355cc9] text-[10px] font-bold text-white">1</span><span className="font-medium text-zinc-300">Your Info</span></div>
+        <div className="h-px w-8 bg-white/10" />
+        <div className="flex items-center gap-1.5"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[10px] font-bold">2</span><span>Forward Your Number</span></div>
+        <div className="h-px w-8 bg-white/10" />
+        <div className="flex items-center gap-1.5"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[10px] font-bold">3</span><span>Sara Goes Live</span></div>
       </div>
 
       <Surface className="w-full max-w-md p-8">
@@ -139,7 +147,30 @@ export default function OnboardingPage() {
         </form>
       </Surface>
       
-      <p className="mt-8 text-xs text-zinc-600">
+      <div className="mt-8 w-full max-w-md rounded-xl border border-white/5 bg-white/[0.02] p-6">
+        <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">After you hit Complete Setup →</p>
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#355cc9]/20 text-xs font-bold text-[#5b7cfa]">2</span>
+            <div>
+              <p className="text-sm font-semibold text-zinc-200">Forward your business number to Sara</p>
+              <p className="mt-0.5 text-xs text-zinc-500">On your phone, dial <span className="font-mono text-zinc-300">*72 (615) 716-3328</span> and press call. Takes 10 seconds. Your number stays the same — Sara just picks up when you can't.</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#355cc9]/20 text-xs font-bold text-[#5b7cfa]">3</span>
+            <div>
+              <p className="text-sm font-semibold text-zinc-200">Test it — call your own number</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Sara will answer within 1 second. Try asking her to book an appointment. Every call shows up in your dashboard in real time.</p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-5 rounded-lg border border-[#355cc9]/20 bg-[#355cc9]/10 p-3 text-xs text-zinc-400">
+          💬 Questions? Text or call us at <span className="font-semibold text-zinc-200">(615) 716-3328</span> — we respond same day.
+        </div>
+      </div>
+
+      <p className="mt-6 text-xs text-zinc-600">
         By completing setup, you agree to our Terms of Service and Privacy Policy.
       </p>
     </div>
