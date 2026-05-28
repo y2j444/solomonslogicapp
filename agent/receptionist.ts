@@ -13,6 +13,12 @@ const agent = defineAgent({
       console.error("[FATAL] Uncaught Exception in background task:", err);
     });
     process.on('unhandledRejection', (reason, promise) => {
+      // APIUserAbortError is expected when a caller barges in and the TTS stream is cut — not a real crash.
+      const msg = reason instanceof Error ? reason.message : String(reason);
+      const name = reason instanceof Error ? reason.name : '';
+      if (name === 'APIUserAbortError' || msg.includes('aborted') || msg.includes('abort')) {
+        return; // Suppress — normal barge-in behavior
+      }
       console.error("[FATAL] Unhandled Rejection at:", promise, "reason:", reason);
     });
 
@@ -322,10 +328,12 @@ ${callHandlingRules}
       turnHandling: {
         preemptiveGeneration: { enabled: false },
         interruption: {
-          minDuration: 700,
-          minWords: 0,
+          // 1000ms + 3 words: prevents background noise / breathing from triggering barge-in
+          // and aborting the TTS stream mid-sentence.
+          minDuration: 1000,
+          minWords: 3,
           resumeFalseInterruption: true,
-          falseInterruptionTimeout: 2500,
+          falseInterruptionTimeout: 2000,
         },
       },
     });
