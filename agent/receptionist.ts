@@ -26,7 +26,7 @@ const agent = defineAgent({
     const { z } = await import("zod");
     const openai = await import("@livekit/agents-plugin-openai");
     const deepgram = await import("@livekit/agents-plugin-deepgram");
-    const cartesia = await import("@livekit/agents-plugin-cartesia");
+    // Cartesia removed — free tier is only 10k chars/month. OpenAI TTS has no meaningful limit at our volume.
     // In production: prisma.ts is compiled by esbuild into dist/agent/prisma.js alongside this file.
     // In dev: tsx resolves this correctly from agent/ as well via the tsconfig paths.
     const { prisma } = await import("./prisma.js");
@@ -41,7 +41,6 @@ const agent = defineAgent({
       "LIVEKIT_API_KEY",
       "LIVEKIT_API_SECRET",
       "DEEPGRAM_API_KEY",
-      "CARTESIA_API_KEY",
       "OPENAI_API_KEY",
     ];
     const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
@@ -308,14 +307,13 @@ ${callHandlingRules}
 
     const transcript: { role: string; content: string }[] = [];
 
-    const cartesiaVoiceId = process.env.CARTESIA_VOICE_ID?.trim();
-    console.log(
-      "Using Cartesia Voice ID:",
-      cartesiaVoiceId || "plugin default (set CARTESIA_VOICE_ID in Railway for a custom voice)"
-    );
+    // OpenAI TTS — no separate quota limit, uses existing OPENAI_API_KEY
+    // Voice options: alloy, echo, fable, onyx, nova, shimmer
+    const openaiTtsVoice = (process.env.OPENAI_TTS_VOICE?.trim() || "nova") as any;
+    console.log("Using OpenAI TTS voice:", openaiTtsVoice);
     const session = new voice.AgentSession({
       stt: new deepgram.STT(),
-      tts: new cartesia.TTS(cartesiaVoiceId ? { voice: cartesiaVoiceId } : {}),
+      tts: new openai.TTS({ voice: openaiTtsVoice }),
       llm: new openai.LLM({
         model: "gpt-4o-mini",
       }),
