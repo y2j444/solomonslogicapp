@@ -4,7 +4,7 @@ import { defineAgent } from "@livekit/agents";
 import dotenv from "dotenv";
 
 // Load environment variables for the sub-process
-dotenv.config({ override: true });
+dotenv.config();
 
 const agent = defineAgent({
   entry: async (ctx: any) => {
