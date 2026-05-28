@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Solomons Logic CRM",
-  description: "Migrated CRM and AI receptionist foundation.",
+  title: "Solomon's Logic — AI Receptionist for Local Businesses",
+  description: "Sara answers your calls 24/7, sounds completely human, and books appointments directly into your calendar. Never miss a customer call again. Try the live demo: (615) 716-3328.",
 };
 
 export default function RootLayout({
