@@ -59,4 +59,12 @@
 - **Action**: Pushed Prisma schema changes directly to Supabase (`npx prisma db push`) to fix a 500 API error blocking the dashboard because `stripeCustomerId` was missing in the DB.
 - **Action**: Used a script to create a real, live Stripe Product and Price for the $199/mo Professional plan (`price_1TdcFBFYw42U1vfCoqfPDqZP`) and hardcoded it into the subscription button, fully enabling live checkout.
 
+- **Built**: Auto-provisioning pipeline — when a customer's Stripe payment clears, the app automatically:
+  1. Buys a dedicated Telnyx phone number (Nashville 615 area code preferred)
+  2. Configures it to route calls to the AI via `/api/texml/voice`
+  3. Saves it to the customer's `AIPhone` field in the DB
+  4. Onboarding page now shows their personal number (e.g., `*72 +16151234567`) instead of the demo number
+- **Fixed**: `telnyx.ts` restored `sendTelnyxSms` export used by appointments route for SMS confirmations
+- **Confirmed**: TypeScript compiles clean (0 errors) — safe to deploy
+
 ---
