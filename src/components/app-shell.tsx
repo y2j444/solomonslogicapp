@@ -43,8 +43,10 @@ export function AppShell({
     if (!isUserLoaded) return;
 
     if (!isSignedIn) {
-      setProfile(null);
-      setIsLoadingProfile(false);
+      setTimeout(() => {
+        setProfile(null);
+        setIsLoadingProfile(false);
+      }, 0);
       return;
     }
 
@@ -174,12 +176,12 @@ export function AppShell({
                 </div>
                 <h2 className="text-xl font-semibold">Protected Area</h2>
                 <p className="mt-2 text-zinc-500 max-w-xs">
-                  Please sign in to your Solomon's Logic account to access the CRM and your appointments.
+                  Please sign in to your Solomon&apos;s Logic account to access the CRM and your appointments.
                 </p>
                 <div className="mt-6">
                   <SignInButton mode="modal">
                     <button className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:bg-blue-500 transition-all">
-                      Sign in to Solomon's Logic
+                      Sign in to Solomon&apos;s Logic
                     </button>
                   </SignInButton>
                 </div>
