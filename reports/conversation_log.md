@@ -53,6 +53,7 @@
 ### Session: June 1, 2026
 - **Instruction**: Lowered the pricing of the Professional plan to $199/mo across the landing page and CRM config to boost sales conversion rates.
 - **Goal**: Reach 5 paying customers by end of June 2026.
-
+- **Action**: Fired follow-up pitches to our 5 Nashville leads (`scratch/fire_pitches.ts`).
+- **Blocker**: I monitored the site for signup issues. We are currently missing Stripe keys (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`) in the environment variables, which will prevent any of our converted leads from actually paying. I am requesting these from Mike.
 
 ---
