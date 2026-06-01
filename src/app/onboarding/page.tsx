@@ -72,8 +72,8 @@ export default function OnboardingPage() {
         <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[#355cc9] text-xl font-bold text-white shadow-lg shadow-blue-500/20">
           S
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Welcome to Solomon's Logic 🎉</h1>
-        <p className="mt-2 text-zinc-500">You're 3 minutes away from never missing a call again.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Welcome to Solomon&apos;s Logic 🎉</h1>
+        <p className="mt-2 text-zinc-500">You&apos;re 3 minutes away from never missing a call again.</p>
       </div>
 
       <div className="mb-6 flex items-center gap-3 text-xs text-zinc-500">
@@ -154,7 +154,7 @@ export default function OnboardingPage() {
             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#355cc9]/20 text-xs font-bold text-[#5b7cfa]">2</span>
             <div>
               <p className="text-sm font-semibold text-zinc-200">Forward your business number to Sara</p>
-              <p className="mt-0.5 text-xs text-zinc-500">On your phone, dial <span className="font-mono text-zinc-300">*72 (615) 716-3328</span> and press call. Takes 10 seconds. Your number stays the same — Sara just picks up when you can't.</p>
+              <p className="mt-0.5 text-xs text-zinc-500">On your phone, dial <span className="font-mono text-zinc-300">*72 (615) 716-3328</span> and press call. Takes 10 seconds. Your number stays the same — Sara just picks up when you can&apos;t.</p>
             </div>
           </div>
           <div className="flex gap-3">

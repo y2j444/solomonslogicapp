@@ -259,7 +259,7 @@ export default function SettingsPage() {
             </div>
             
             <p className="mt-4 text-[10px] text-zinc-600">
-              Note: The 'Subscribe' button currently uses a mock Price ID. Replace 'price_unlimited_mock' with your real Stripe Price ID.
+              Note: The &apos;Subscribe&apos; button currently uses a mock Price ID. Replace &apos;price_unlimited_mock&apos; with your real Stripe Price ID.
             </p>
           </div>
         </Surface>

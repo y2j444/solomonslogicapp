@@ -62,7 +62,7 @@ function LandingPage() {
       <nav style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 2rem", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, background: "rgba(10,12,20,0.9)", backdropFilter: "blur(12px)", zIndex: 50 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "linear-gradient(135deg, #5b7cfa, #7c3aed)", display: "grid", placeItems: "center", fontWeight: 800, fontSize: "14px" }}>S</div>
-          <span style={{ fontWeight: 700, fontSize: "15px", letterSpacing: "-0.3px" }}>Solomon's Logic</span>
+          <span style={{ fontWeight: 700, fontSize: "15px", letterSpacing: "-0.3px" }}>Solomon&apos;s Logic</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <a href={`tel:${DEMO_NUMBER_TEL}`} style={{ color: "#94a3b8", fontSize: "13px", textDecoration: "none" }}>
@@ -93,7 +93,7 @@ function LandingPage() {
 
         {/* Demo CTA */}
         <div style={{ background: "rgba(91,124,250,0.08)", border: "1px solid rgba(91,124,250,0.2)", borderRadius: "20px", padding: "32px", marginBottom: "40px", display: "inline-block", minWidth: "340px" }}>
-          <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#64748b", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1px" }}>📞 Call Sara right now — she's live</p>
+          <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#64748b", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1px" }}>📞 Call Sara right now — she&apos;s live</p>
           <a href={`tel:${DEMO_NUMBER_TEL}`} style={{ display: "block", fontSize: "2.4rem", fontWeight: 800, color: "#5b7cfa", textDecoration: "none", letterSpacing: "-1px", margin: "0 0 16px" }}>
             {DEMO_NUMBER}
           </a>
@@ -236,7 +236,7 @@ function LandingPage() {
 
       {/* ── Footer ── */}
       <footer style={{ padding: "32px 2rem", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-        <div style={{ fontSize: "13px", color: "#475569" }}>© 2026 Solomon's Logic LLC · Nashville, TN</div>
+        <div style={{ fontSize: "13px", color: "#475569" }}>© 2026 Solomon&apos;s Logic LLC · Nashville, TN</div>
         <div style={{ display: "flex", gap: "24px" }}>
           <Link href="/sign-in" style={{ fontSize: "13px", color: "#475569", textDecoration: "none" }}>Sign In</Link>
           <a href="mailto:mike@solomonslogic.com" style={{ fontSize: "13px", color: "#475569", textDecoration: "none" }}>Contact</a>
