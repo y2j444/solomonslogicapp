@@ -13,6 +13,7 @@ const navItems = [
   { href: "/call-logs", label: "Call Logs", icon: "📞" },
   { href: "/ai-receptionist", label: "AI Receptionist", icon: "🤖" },
   { href: "/agency/chat", label: "Agency Team", icon: "🧠" },
+  { href: "/admin", label: "Admin Panel", icon: "🛡️" },
   { href: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
