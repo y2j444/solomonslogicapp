@@ -55,5 +55,8 @@
 - **Goal**: Reach 5 paying customers by end of June 2026.
 - **Action**: Fired follow-up pitches to our 5 Nashville leads (`scratch/fire_pitches.ts`).
 - **Fixed**: Mike provided the Stripe keys. I've added them to `.env` and `.env.local`. Billing is now unblocked and our leads can successfully sign up and pay.
+- **Fixed**: Solved a critical Next.js runtime crash (`TypeError: Cannot read properties of undefined (reading 'length')`) that was showing the "This page couldn't load" error boundary to users.
+- **Action**: Pushed Prisma schema changes directly to Supabase (`npx prisma db push`) to fix a 500 API error blocking the dashboard because `stripeCustomerId` was missing in the DB.
+- **Action**: Used a script to create a real, live Stripe Product and Price for the $199/mo Professional plan (`price_1TdcFBFYw42U1vfCoqfPDqZP`) and hardcoded it into the subscription button, fully enabling live checkout.
 
 ---
