@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { SignInButton, SignOutButton, UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 
+const ADMIN_EMAIL = "michael.janico@solomonslogic.com";
+
 const navItems = [
   { href: "/", label: "Dashboard", icon: "◩" },
   { href: "/contacts", label: "Contacts", icon: "👥" },
@@ -13,8 +15,11 @@ const navItems = [
   { href: "/call-logs", label: "Call Logs", icon: "📞" },
   { href: "/ai-receptionist", label: "AI Receptionist", icon: "🤖" },
   { href: "/agency/chat", label: "Agency Team", icon: "🧠" },
-  { href: "/admin", label: "Admin Panel", icon: "🛡️" },
   { href: "/settings", label: "Settings", icon: "⚙️" },
+];
+
+const adminNavItems = [
+  { href: "/admin", label: "Admin Panel", icon: "🛡️" },
 ];
 
 type Profile = {
@@ -89,6 +94,25 @@ export function AppShell({
             <nav className="flex-1 p-3">
               <div className="space-y-1">
                 {navItems.map((item) => {
+                  const active = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={[
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
+                        active
+                          ? "bg-[#355cc9] text-white shadow-lg shadow-blue-500/15"
+                          : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
+                      ].join(" ")}
+                    >
+                      <span className="text-[13px] opacity-80">{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
+                {/* Admin-only links — only visible to Solomon's Logic owner */}
+                {profile?.email?.toLowerCase() === ADMIN_EMAIL && adminNavItems.map((item) => {
                   const active = pathname === item.href;
                   return (
                     <Link

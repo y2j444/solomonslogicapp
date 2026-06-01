@@ -2,14 +2,18 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
-const ADMIN_CLERK_ID = process.env.ADMIN_CLERK_USER_ID;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "michael.janico@solomonslogic.com";
 
-async function assertAdmin() {
+async function assertAdmin(): Promise<boolean> {
   const { userId } = await auth();
   if (!userId) return false;
-  // If ADMIN_CLERK_USER_ID is set, enforce it. Otherwise, first user wins.
-  if (ADMIN_CLERK_ID) return userId === ADMIN_CLERK_ID;
-  return true; // dev fallback
+
+  const user = await prisma.user.findUnique({
+    where: { clerkUserId: userId },
+    select: { email: true },
+  });
+
+  return user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
 export const dynamic = "force-dynamic";
