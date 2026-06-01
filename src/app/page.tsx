@@ -304,7 +304,7 @@ function Dashboard() {
           <div className="border-b border-white/5 px-5 py-4">
             <h2 className="text-[14px] font-semibold">Upcoming Appointments</h2>
           </div>
-          {stats?.upcomingAppointments.length ? (
+          {stats?.upcomingAppointments?.length ? (
             <div className="divide-y divide-white/5">
               {stats.upcomingAppointments.map((appointment) => (
                 <div key={appointment.id} className="flex items-start justify-between gap-4 px-5 py-4">
@@ -330,7 +330,7 @@ function Dashboard() {
           <div className="border-b border-white/5 px-5 py-4">
             <h2 className="text-[14px] font-semibold">Recent Calls</h2>
           </div>
-          {stats?.recentCallItems.length ? (
+          {stats?.recentCallItems?.length ? (
             <div className="divide-y divide-white/5">
               {stats.recentCallItems.map((call) => (
                 <div key={call.id} className="flex items-start justify-between gap-4 px-5 py-4">
