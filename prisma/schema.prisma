@@ -24,6 +24,13 @@ model User {
   appointments Appointment[]
   callLogs     CallLog[]
   smsMessages  SmsMessage[]
+
+  // Stripe Billing Fields
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+  subscriptionStatus     String    @default("inactive")
 }
 
 model Contact {

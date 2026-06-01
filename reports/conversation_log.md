@@ -18,7 +18,7 @@
 - **Product:** Solomon's Logic AI Receptionist — "Sara"
 - **Demo number:** (615) 716-3328
 - **Live at:** app.solomonslogic.com
-- **Pricing:** $149/mo Starter | $299/mo Professional | $599/mo Growth
+- **Pricing:** $149/mo Starter | $199/mo Professional | $599/mo Growth
 - **Infrastructure:** Next.js app on Vercel + LiveKit agent on Railway
 - **STT:** Deepgram | **LLM:** OpenAI GPT-4o-mini | **TTS:** OpenAI nova
 - **Call routing:** Telnyx SIP → LiveKit → Sara agent
@@ -26,6 +26,7 @@
 ### Key Technical Decisions Made
 | Date | Decision | Reason |
 |------|----------|--------|
+| Jun 01 | Lowered Professional price to $199/mo | Mike's directive to lower cost to $199 for sales alignment |
 | May 28 | Switched TTS Cartesia → OpenAI | Cartesia 10k free tier exhausted |
 | May 28 | Reverted `dotenv override: true` | Was wiping Railway env vars on startup |
 | May 28 | Raised barge-in threshold: 0 words → 3 words | Background noise triggering TTS abort crashes |
@@ -48,5 +49,10 @@
 ---
 
 ## Session Log will be updated each day below this line.
+
+### Session: June 1, 2026
+- **Instruction**: Lowered the pricing of the Professional plan to $199/mo across the landing page and CRM config to boost sales conversion rates.
+- **Goal**: Reach 5 paying customers by end of June 2026.
+
 
 ---

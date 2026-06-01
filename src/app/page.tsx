@@ -176,7 +176,7 @@ function LandingPage() {
             },
             {
               name: "Professional",
-              price: "$299",
+              price: "$199",
               period: "/month",
               desc: "Most popular — everything you need",
               features: ["Up to 500 call minutes/month", "Full CRM + SMS messages", "Lead pipeline tracking", "Custom knowledge base", "Priority support", "Cancel anytime"],

@@ -10,6 +10,8 @@ type Profile = {
   businessPhone: string | null;
   AIPhone: string | null;
   email: string;
+  subscriptionStatus?: string;
+  stripePriceId?: string | null;
 };
 
 export default function SettingsPage() {
@@ -179,6 +181,86 @@ export default function SettingsPage() {
                 <span className="text-blue-400 font-medium">Standard Voice AI</span>
               </div>
             </div>
+          </div>
+        </Surface>
+
+        {/* --- Billing & Subscription --- */}
+        <Surface className="mt-4 p-6">
+          <h3 className="text-sm font-semibold">Billing & Subscription</h3>
+          <p className="mt-1 text-xs text-zinc-500">
+            Manage your plan to keep the AI Receptionist active.
+          </p>
+
+          <div className="mt-4 border-t border-white/5 pt-4">
+            <div className="flex justify-between items-center mb-6 text-sm">
+              <span className="text-zinc-500">Current Status</span>
+              {profile?.subscriptionStatus === "active" ? (
+                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-500 uppercase">
+                  Active
+                </span>
+              ) : (
+                <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-bold text-red-500 uppercase">
+                  {profile?.subscriptionStatus || "Inactive"}
+                </span>
+              )}
+            </div>
+
+            <div className="max-w-md">
+              {[
+                { name: "Unlimited Plan", price: "$199", priceId: "price_unlimited_mock", description: "Full access to the AI Receptionist. Never miss a call." },
+              ].map((tier) => {
+                const isActive = profile?.stripePriceId === tier.priceId && profile?.subscriptionStatus === "active";
+                return (
+                  <div
+                    key={tier.name}
+                    className={`rounded-xl border p-5 flex flex-col justify-between ${
+                      isActive
+                        ? "border-[#355cc9] bg-[#355cc9]/10"
+                        : "border-white/5 bg-white/[0.02]"
+                    }`}
+                  >
+                    <div>
+                      <h4 className="font-semibold text-zinc-200">{tier.name}</h4>
+                      <p className="mt-1 text-xs text-zinc-400">{tier.description}</p>
+                      <p className="text-3xl font-bold mt-4">
+                        {tier.price}<span className="text-sm font-normal text-zinc-500">/mo</span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/stripe/checkout", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ priceId: tier.priceId }),
+                          });
+                          const data = await res.json();
+                          if (data.url) {
+                            window.location.href = data.url;
+                          } else {
+                            alert(data.error || "Failed to start checkout");
+                          }
+                        } catch (e) {
+                          alert("Error connecting to checkout.");
+                        }
+                      }}
+                      disabled={isActive}
+                      className={`mt-6 w-full rounded-lg py-3 text-sm font-semibold transition shadow-lg ${
+                        isActive
+                          ? "bg-zinc-800 text-zinc-500 cursor-not-allowed shadow-none"
+                          : "bg-[#355cc9] text-white hover:bg-[#456ce0] shadow-blue-500/20"
+                      }`}
+                    >
+                      {isActive ? "Active Plan" : "Subscribe Now"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <p className="mt-4 text-[10px] text-zinc-600">
+              Note: The 'Subscribe' button currently uses a mock Price ID. Replace 'price_unlimited_mock' with your real Stripe Price ID.
+            </p>
           </div>
         </Surface>
       </div>
