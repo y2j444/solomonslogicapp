@@ -207,7 +207,7 @@ export default function SettingsPage() {
 
             <div className="max-w-md">
               {[
-                { name: "Unlimited Plan", price: "$199", priceId: "price_unlimited_mock", description: "Full access to the AI Receptionist. Never miss a call." },
+                { name: "Professional Plan", price: "$199", priceId: "price_1TdcFBFYw42U1vfCoqfPDqZP", description: "Full access to the AI Receptionist. Never miss a call." },
               ].map((tier) => {
                 const isActive = profile?.stripePriceId === tier.priceId && profile?.subscriptionStatus === "active";
                 return (
