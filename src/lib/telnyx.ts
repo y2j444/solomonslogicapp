@@ -1,45 +1,186 @@
 /**
- * Telnyx Messaging Helper
+ * Telnyx Phone Provisioning & SMS Helper
+ *
+ * - sendTelnyxSms: Send an SMS via Telnyx (used by appointments route for confirmations)
+ * - provisionNumberForUser: Auto-buy & configure a dedicated Telnyx number for a new subscriber
+ *   (called from Stripe webhook on checkout.session.completed)
  */
-export async function sendTelnyxSms(to: string, text: string) {
-  const apiKey = process.env.TELNYX_API_KEY;
-  const from = process.env.TWILIO_PHONE_NUMBER || process.env.TELNYX_PHONE_NUMBER; // Fallback to whatever number is set
 
-  if (!apiKey) {
-    console.error("[telnyx] Missing TELNYX_API_KEY in .env");
-    return { success: false, error: "Missing API Key" };
-  }
+const TELNYX_API_BASE = "https://api.telnyx.com/v2";
 
+function telnyxHeaders(): Record<string, string> {
+  const key = process.env.TELNYX_API_KEY;
+  if (!key) throw new Error("TELNYX_API_KEY is not set");
+  return {
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// SMS
+// ---------------------------------------------------------------------------
+
+/**
+ * Send an SMS message via Telnyx.
+ */
+export async function sendTelnyxSms(to: string, message: string): Promise<void> {
+  const from = process.env.TELNYX_PHONE_NUMBER;
   if (!from) {
-    console.error("[telnyx] Missing sender phone number in .env");
-    return { success: false, error: "Missing sender number" };
+    console.warn("[Telnyx SMS] TELNYX_PHONE_NUMBER not set, skipping SMS.");
+    return;
   }
 
+  const res = await fetch(`${TELNYX_API_BASE}/messages`, {
+    method: "POST",
+    headers: telnyxHeaders(),
+    body: JSON.stringify({ from, to, text: message }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`Telnyx SMS failed: ${JSON.stringify(err)}`);
+  }
+
+  console.log(`[Telnyx SMS] ✅ Sent to ${to}`);
+}
+
+// ---------------------------------------------------------------------------
+// Phone number provisioning
+// ---------------------------------------------------------------------------
+
+interface TelnyxNumber {
+  id: string;
+  phone_number: string;
+}
+
+/**
+ * Search for an available US phone number in a given area code.
+ */
+export async function searchAvailableNumber(areaCode = "615"): Promise<string | null> {
+  const url = `${TELNYX_API_BASE}/available_phone_numbers?filter[national_destination_code]=${areaCode}&filter[features][]=voice&limit=5`;
+  const res = await fetch(url, { headers: telnyxHeaders() });
+  const json = await res.json();
+
+  if (!res.ok) {
+    console.error("[Telnyx] Search failed:", json);
+    return null;
+  }
+
+  const numbers: any[] = json.data || [];
+  return numbers[0]?.phone_number || null;
+}
+
+/**
+ * Purchase a phone number from Telnyx.
+ */
+export async function purchaseNumber(phoneNumber: string): Promise<TelnyxNumber | null> {
+  const res = await fetch(`${TELNYX_API_BASE}/number_orders`, {
+    method: "POST",
+    headers: telnyxHeaders(),
+    body: JSON.stringify({
+      phone_numbers: [{ phone_number: phoneNumber }],
+    }),
+  });
+  const json = await res.json();
+
+  if (!res.ok) {
+    console.error("[Telnyx] Purchase failed:", json);
+    return null;
+  }
+
+  const purchased = json.data?.phone_numbers?.[0];
+  if (!purchased) return null;
+
+  return {
+    id: purchased.id,
+    phone_number: purchased.phone_number,
+  };
+}
+
+/**
+ * Configure the voice webhook on a purchased number so inbound calls
+ * are routed to /api/texml/voice → LiveKit SIP.
+ */
+export async function configureNumberWebhook(phoneNumber: string): Promise<boolean> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.solomonslogic.com";
+  const webhookUrl = `${appUrl}/api/texml/voice`;
+
+  // Look up the number record in Telnyx by phone number string
+  const listRes = await fetch(
+    `${TELNYX_API_BASE}/phone_numbers?filter[phone_number]=${encodeURIComponent(phoneNumber)}&page[size]=5`,
+    { headers: telnyxHeaders() }
+  );
+  const listJson = await listRes.json();
+  const record = listJson.data?.[0];
+
+  if (!record) {
+    console.error("[Telnyx] Could not find number to configure:", phoneNumber);
+    return false;
+  }
+
+  // Set the number to use TeXML (webhook-based voice handling)
+  await fetch(`${TELNYX_API_BASE}/phone_numbers/${record.id}/voice`, {
+    method: "PATCH",
+    headers: telnyxHeaders(),
+    body: JSON.stringify({
+      handler: "texml",
+      techprefix_enabled: false,
+    }),
+  });
+
+  // Also ensure the number is generally updated
+  const updateRes = await fetch(`${TELNYX_API_BASE}/phone_numbers/${record.id}`, {
+    method: "PATCH",
+    headers: telnyxHeaders(),
+    body: JSON.stringify({ hd_voice_enabled: true }),
+  });
+
+  if (!updateRes.ok) {
+    const err = await updateRes.json();
+    console.error("[Telnyx] Number update failed:", err);
+  }
+
+  console.log(`[Telnyx] Configured ${phoneNumber} → ${webhookUrl}`);
+  return true;
+}
+
+/**
+ * Full provisioning flow: search → purchase → configure webhook → return E.164 number.
+ * Tries the preferred area code first, falls back to any US number.
+ * Returns null on any failure.
+ */
+export async function provisionNumberForUser(preferredAreaCode = "615"): Promise<string | null> {
   try {
-    const response = await fetch("https://api.telnyx.com/v2/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        from: from,
-        to: to,
-        text: text,
-      }),
-    });
+    console.log(`[Telnyx] Searching for available number in area code ${preferredAreaCode}...`);
 
-    const data = await response.json();
+    let available = await searchAvailableNumber(preferredAreaCode);
 
-    if (!response.ok) {
-      console.error("[telnyx] Send failed:", JSON.stringify(data, null, 2));
-      return { success: false, error: data };
+    if (!available) {
+      console.warn(`[Telnyx] No numbers in ${preferredAreaCode}, searching nationally...`);
+      available = await searchAvailableNumber("888");
+    }
+    if (!available) {
+      console.error("[Telnyx] No available numbers found.");
+      return null;
     }
 
-    console.log(`[telnyx] SMS sent to ${to}`);
-    return { success: true, data };
-  } catch (error) {
-    console.error("[telnyx] Error sending SMS:", error);
-    return { success: false, error };
+    console.log(`[Telnyx] Purchasing ${available}...`);
+    const purchased = await purchaseNumber(available);
+    if (!purchased) return null;
+
+    const number = purchased.phone_number;
+    console.log(`[Telnyx] Purchased ${number}. Configuring webhook...`);
+
+    // Give Telnyx a moment to provision before configuring
+    await new Promise((r) => setTimeout(r, 3000));
+    await configureNumberWebhook(number);
+
+    console.log(`[Telnyx] ✅ Provisioned number: ${number}`);
+    return number;
+  } catch (err) {
+    console.error("[Telnyx] Provisioning error:", err);
+    return null;
   }
 }

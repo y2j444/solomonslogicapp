@@ -9,6 +9,7 @@ type Profile = {
   lastName: string | null;
   businessName: string | null;
   businessPhone: string | null;
+  AIPhone: string | null;
 };
 
 export default function OnboardingPage() {
@@ -18,6 +19,7 @@ export default function OnboardingPage() {
     lastName: "",
     businessName: "",
     businessPhone: "",
+    AIPhone: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -31,6 +33,7 @@ export default function OnboardingPage() {
           lastName: data.lastName || "",
           businessName: data.businessName || "",
           businessPhone: data.businessPhone || "",
+          AIPhone: data.AIPhone || null,
         });
         setIsLoading(false);
       })
@@ -154,7 +157,11 @@ export default function OnboardingPage() {
             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#355cc9]/20 text-xs font-bold text-[#5b7cfa]">2</span>
             <div>
               <p className="text-sm font-semibold text-zinc-200">Forward your business number to Sara</p>
-              <p className="mt-0.5 text-xs text-zinc-500">On your phone, dial <span className="font-mono text-zinc-300">*72 (615) 716-3328</span> and press call. Takes 10 seconds. Your number stays the same — Sara just picks up when you can&apos;t.</p>
+              {profile.AIPhone ? (
+                <p className="mt-0.5 text-xs text-zinc-500">On your phone, dial <span className="font-mono text-zinc-300">*72 {profile.AIPhone}</span> and press call. Takes 10 seconds. Your number stays the same — Sara just picks up when you can&apos;t.</p>
+              ) : (
+                <p className="mt-0.5 text-xs text-zinc-500">Your dedicated AI number is being set up — this usually happens within a few minutes of subscribing. Check back shortly, then dial <span className="font-mono text-zinc-300">*72 [your assigned number]</span> to activate Sara.</p>
+              )}
             </div>
           </div>
           <div className="flex gap-3">
@@ -166,7 +173,7 @@ export default function OnboardingPage() {
           </div>
         </div>
         <div className="mt-5 rounded-lg border border-[#355cc9]/20 bg-[#355cc9]/10 p-3 text-xs text-zinc-400">
-          💬 Questions? Text or call us at <span className="font-semibold text-zinc-200">(615) 716-3328</span> — we respond same day.
+          💬 Questions? Email us at <span className="font-semibold text-zinc-200">support@solomonslogic.com</span> — we respond same day.
         </div>
       </div>
 

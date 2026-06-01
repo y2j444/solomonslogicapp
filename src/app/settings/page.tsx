@@ -259,7 +259,7 @@ export default function SettingsPage() {
             </div>
             
             <p className="mt-4 text-[10px] text-zinc-600">
-              Note: The &apos;Subscribe&apos; button currently uses a mock Price ID. Replace &apos;price_unlimited_mock&apos; with your real Stripe Price ID.
+              Payments are secured by Stripe. Your AI phone number will be automatically assigned after checkout.
             </p>
           </div>
         </Surface>

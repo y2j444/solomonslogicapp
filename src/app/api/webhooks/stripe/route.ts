@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { provisionNumberForUser } from "@/lib/telnyx";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -37,7 +38,8 @@ export async function POST(req: Request) {
           const subscription = (await stripe.subscriptions.retrieve(
             session.subscription as string
           )) as any;
-          
+
+          // 1. Update subscription billing fields
           await prisma.user.update({
             where: { id: session.metadata.userId },
             data: {
@@ -48,18 +50,41 @@ export async function POST(req: Request) {
               subscriptionStatus: subscription.status,
             },
           });
-          console.log(`Updated subscription for user ${session.metadata.userId}`);
+          console.log(`[Stripe] Updated subscription for user ${session.metadata.userId}`);
+
+          // 2. Auto-provision a dedicated Telnyx phone number (if not already assigned)
+          const user = await prisma.user.findUnique({
+            where: { id: session.metadata.userId },
+            select: { AIPhone: true, email: true },
+          });
+
+          if (!user?.AIPhone) {
+            console.log(`[Telnyx] Provisioning number for user ${session.metadata.userId}...`);
+            const provisionedNumber = await provisionNumberForUser("615");
+
+            if (provisionedNumber) {
+              await prisma.user.update({
+                where: { id: session.metadata.userId },
+                data: { AIPhone: provisionedNumber },
+              });
+              console.log(`[Telnyx] ✅ Assigned ${provisionedNumber} to user ${session.metadata.userId} (${user?.email})`);
+            } else {
+              console.error(`[Telnyx] ❌ Failed to provision number for user ${session.metadata.userId}`);
+            }
+          } else {
+            console.log(`[Telnyx] User ${session.metadata.userId} already has AIPhone: ${user.AIPhone}`);
+          }
         }
         break;
       }
-      
+
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as any;
         if (invoice.subscription) {
           const subscription = (await stripe.subscriptions.retrieve(
             invoice.subscription as string
           )) as any;
-          
+
           await prisma.user.updateMany({
             where: { stripeSubscriptionId: subscription.id },
             data: {
@@ -76,7 +101,7 @@ export async function POST(req: Request) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const subscription = event.data.object as any;
-        
+
         await prisma.user.updateMany({
           where: { stripeSubscriptionId: subscription.id },
           data: {
