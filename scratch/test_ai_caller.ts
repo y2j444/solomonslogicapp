@@ -1,60 +1,67 @@
-import * as dotenv from 'dotenv';
+/**
+ * test_ai_caller.ts
+ * 
+ * Dispatches the "sales-pitcher" LiveKit agent for an outbound cold call.
+ * The agent connects to a LiveKit room, then dials the target via the Telnyx SIP trunk.
+ * 
+ * Usage: npx tsx scratch/test_ai_caller.ts
+ */
+
+import * as dotenv from "dotenv";
+import { AgentDispatchClient } from "livekit-server-sdk";
+
 dotenv.config();
 
-const TELNYX_API_KEY = process.env.TELNYX_API_KEY;
-const FROM_NUMBER = process.env.TELNYX_PHONE_NUMBER || '+16157163328';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.solomonslogic.com';
-const TELNYX_CONNECTION_ID = process.env.TELNYX_CONNECTION_ID;
+const TARGET_PHONE = "+17169394226"; // Mike (test)
+const TARGET_NAME = "Mike";
+const BUSINESS_NAME = "Solomon's Logic Test";
 
-if (!TELNYX_API_KEY) {
-  console.error('❌ TELNYX_API_KEY not set in .env');
-  process.exit(1);
-}
+async function main() {
+  console.log("\n📞 Solomon's Logic — AI Outbound Sales Pitcher");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log(`🎯 Target: ${TARGET_NAME} at ${BUSINESS_NAME}`);
+  console.log(`📱 Phone: ${TARGET_PHONE}`);
+  console.log(`🎙️  Voice: Marcus (deep male, OpenAI onyx)`);
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
-if (!TELNYX_CONNECTION_ID) {
-  console.error('❌ TELNYX_CONNECTION_ID not set in .env');
-  process.exit(1);
-}
+  const lkUrl = process.env.LIVEKIT_URL || "";
+  const apiKey = process.env.LIVEKIT_API_KEY || "";
+  const apiSecret = process.env.LIVEKIT_API_SECRET || "";
 
-const target = { phone: '+17169394226', business: 'Mike Janico (Test)', industry: 'Software' };
-
-async function callBusiness() {
-  const webhookUrl = `${APP_URL}/api/texml/outbound-pitch`;
-
-  const res = await fetch(`https://api.telnyx.com/v2/texml/calls/${TELNYX_CONNECTION_ID}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${TELNYX_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      To: target.phone,
-      From: FROM_NUMBER,
-      Url: webhookUrl,
-      Method: 'POST'
-    }),
-  });
-
-  const json = await res.json();
-  if (!res.ok) {
-    throw new Error(JSON.stringify(json?.errors || json));
+  if (!lkUrl || !apiKey || !apiSecret) {
+    console.error("❌ Missing LIVEKIT_URL, LIVEKIT_API_KEY, or LIVEKIT_API_SECRET in .env");
+    process.exit(1);
   }
-  return json;
-}
 
-async function runCampaign() {
-  console.log('\n📞 Solomon\'s Logic — AI Outbound Cold Caller (TEST MODE - TeXML)');
-  console.log(`📤 Calling from: ${FROM_NUMBER}`);
-  console.log(`🤖 Sara will pitch live when you answer\n`);
+  const dispatchClient = new AgentDispatchClient(lkUrl, apiKey, apiSecret);
+
+  // Create a unique room for this call
+  const roomName = `outbound-${Date.now()}`;
+
+  console.log(`📡 Dispatching sales-pitcher agent to room: ${roomName}`);
+  console.log(`🔄 Agent will connect, then dial ${TARGET_PHONE}...`);
 
   try {
-    const call = await callBusiness();
-    console.log(`✅ Dialing ${target.business} (${target.phone})`);
-  } catch (err: any) {
-    console.error(`❌ Failed to call ${target.business}:`, err?.message || err);
-  }
+    const dispatch = await dispatchClient.createDispatch(
+      roomName,
+      "sales-pitcher", // Must match agentName in ServerOptions
+      {
+        metadata: JSON.stringify({
+          phone: TARGET_PHONE,
+          name: BUSINESS_NAME,
+          leadName: TARGET_NAME,
+        }),
+      }
+    );
 
-  console.log('\n✅ Test call initiated. Pick up the phone!\n');
+    console.log(`\n✅ Dispatch created! ID: ${dispatch.dispatchId}`);
+    console.log(`\n📲 Your phone (${TARGET_PHONE}) will ring in ~5 seconds.`);
+    console.log("   Pick up and Marcus will pitch you!\n");
+    console.log("Press Ctrl+C to stop monitoring.");
+  } catch (err: any) {
+    console.error("\n❌ Dispatch failed:", err.message);
+    console.error("Make sure the sales-pitcher agent worker is running on Railway with AGENT_TYPE=sales-pitcher");
+  }
 }
 
-runCampaign();
+main();

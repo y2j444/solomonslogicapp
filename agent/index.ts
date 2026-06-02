@@ -15,11 +15,25 @@ if (!isProduction) {
   process.env.DEBUG = "livekit:*";
 }
 
-console.log("Launching Solomon Agent...");
+// AGENT_TYPE can be "receptionist" (default) or "sales-pitcher"
+const agentType = process.env.AGENT_TYPE || "receptionist";
+
+console.log(`Launching Solomon Agent (type=${agentType})...`);
 
 // Dynamic pathing for Dev vs Production
 const isDev = !__filename.includes("dist");
-const agentFile = isDev ? "receptionist.ts" : "receptionist.js";
+
+let agentFile: string;
+let agentName: string;
+
+if (agentType === "sales-pitcher") {
+  agentFile = isDev ? "sales-pitcher.ts" : "sales-pitcher.js";
+  agentName = "sales-pitcher";
+} else {
+  agentFile = isDev ? "receptionist.ts" : "receptionist.js";
+  agentName = "solomon";
+}
+
 const agentPath = path.join(__dirname, agentFile);
 
 // -1 disables the warm process pool. In JS, 0 is treated as "use default" (4 idle procs).
@@ -27,7 +41,7 @@ const agentPath = path.join(__dirname, agentFile);
 const numIdleProcesses = -1;
 
 console.log(
-  `[Worker] Agent path: ${agentPath} (production=${isProduction}, idleProcesses=${numIdleProcesses})`
+  `[Worker] Agent path: ${agentPath}, name: ${agentName} (production=${isProduction}, idleProcesses=${numIdleProcesses})`
 );
 
 process.on("uncaughtException", (err) => {
@@ -40,7 +54,7 @@ process.on("unhandledRejection", (reason) => {
 cli.runApp(
   new ServerOptions({
     agent: agentPath,
-    agentName: "solomon", // Explicitly named for the Dispatch Rule
+    agentName,
     apiKey: process.env.LIVEKIT_API_KEY,
     apiSecret: process.env.LIVEKIT_API_SECRET,
     host: "0.0.0.0",
