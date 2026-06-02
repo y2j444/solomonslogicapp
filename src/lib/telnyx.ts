@@ -99,9 +99,12 @@ export async function purchaseNumber(phoneNumber: string): Promise<TelnyxNumber 
   };
 }
 
+import { SipClient } from "livekit-server-sdk";
+
 /**
  * Configure the purchased number so inbound calls are routed to LiveKit SIP,
- * and SMS is routed to the correct webhook.
+ * and SMS is routed to the correct webhook. Then, dynamically provision the
+ * LiveKit SIP Trunk and Dispatch Rule for this specific number.
  */
 export async function configureNumberWebhook(phoneNumber: string): Promise<boolean> {
   // Look up the number record in Telnyx by phone number string
@@ -148,6 +151,37 @@ export async function configureNumberWebhook(phoneNumber: string): Promise<boole
   if (!msgRes.ok) {
     const err = await msgRes.json();
     console.error("[Telnyx] Messaging profile assignment failed:", err);
+  }
+
+  // 3. Provision LiveKit SIP Trunk and Dispatch Rule
+  try {
+    const livekitApiUrl = process.env.LIVEKIT_URL || "https://main-receptionist-mk1o51ej.livekit.cloud";
+    const sipClient = new SipClient(
+      livekitApiUrl, 
+      process.env.LIVEKIT_API_KEY, 
+      process.env.LIVEKIT_API_SECRET
+    );
+
+    const cleanNumber = phoneNumber.replace("+", "");
+    const withPlus = "+" + cleanNumber;
+
+    // Create 1-to-1 trunk for this number
+    const trunk = await sipClient.createSipInboundTrunk(`Auto Trunk ${withPlus}`, [withPlus, cleanNumber]);
+    
+    // Create dispatch rule for this trunk
+    await sipClient.createSipDispatchRule({
+      type: "individual",
+      roomPrefix: `${cleanNumber}-`,
+      pin: ""
+    }, {
+      name: `Auto Rule ${withPlus}`,
+      trunkIds: [trunk.sipTrunkId],
+      roomConfig: { agents: [{ agentName: "solomon" }] }
+    });
+    
+    console.log(`[LiveKit] Provisioned SIP Trunk and Dispatch Rule for ${withPlus}`);
+  } catch (lkErr) {
+    console.error("[LiveKit] Failed to provision SIP Trunk/Rule:", lkErr);
   }
 
   console.log(`[Telnyx] Configured ${phoneNumber} → Connection: ${LIVEKIT_CONNECTION_ID}`);
