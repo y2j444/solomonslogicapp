@@ -145,47 +145,13 @@ ${knowledgeBase}
 Call Handling Rules:
 ${callHandlingRules}
 
-- Before calling the 'check_availability' or 'book_appointment' tools, you MUST say a filler phrase like "Hold on a second while I check if that time is available" or "Let me pull up the calendar real quick." so the caller isn't waiting in silence.
-- Once the tool finishes, report the result IMMEDIATELY and ask for the next step.
-- Example: "That time is available! Should I go ahead and book that for you?"
+- NEVER say "one second", "let me check", or "hold on" before booking.
+- Simply ask the customer what date and time they want, and immediately call the 'book_appointment' tool.
+- Once the tool finishes, report the result IMMEDIATELY. If the time is booked, ask for another time.
+- Example: "You're all set for 4 PM on Thursday!"
 - Be direct, professional, and fast.`,
       tools: {
-        check_availability: llm.tool({
-          description: "Check if a specific date and time is available for an appointment.",
-          parameters: z.object({
-            startTime: z.string().describe(
-              `ISO 8601 start time in ${businessTz} (e.g. 2025-05-22T16:30:00-05:00 for 4:30 PM). Do not use Z unless it is true UTC.`
-            ),
-          }),
-          execute: async ({ startTime }) => {
-            try {
-              console.log("Checking availability for:", startTime, "tz:", businessTz);
-              const requestedStart = parseAppointmentDate(startTime, businessTz);
-              const requestedEnd = new Date(requestedStart.getTime() + 30 * 60000);
 
-              const conflict = await prisma.appointment.findFirst({
-                where: {
-                  ownerUserId: userRecord?.id || "",
-                  startTime: {
-                    lt: requestedEnd,
-                  },
-                },
-              });
-
-              if (conflict) {
-                const conflictEnd = new Date(conflict.startTime.getTime() + conflict.durationMinutes * 60000);
-                if (conflictEnd > requestedStart) {
-                  return "That time is already booked. Please ask the user for another time.";
-                }
-              }
-
-              return "That time is available! You can proceed to book the appointment.";
-            } catch (error) {
-              console.error("Availability check failed:", error);
-              return "I'm sorry, I ran into an error checking the calendar. Let's try another time.";
-            }
-          },
-        }),
         get_customer_appointments: llm.tool({
           description: "Get all existing appointments for the current customer.",
           parameters: z.object({}),
@@ -241,17 +207,26 @@ ${callHandlingRules}
                 });
               }
 
-              // Duplicate protection: check if an appointment already exists for this contact at this time
-              const existingAppt = await prisma.appointment.findFirst({
+              // Conflict protection: check if ANY appointment already exists at this exact time
+              const requestedEnd = new Date(appointmentDate.getTime() + 30 * 60000);
+              const conflict = await prisma.appointment.findFirst({
                 where: {
-                  contactId: contact.id,
-                  startTime: appointmentDate,
+                  ownerUserId: userRecord?.id || "",
+                  startTime: {
+                    lt: requestedEnd,
+                  },
                 }
               });
 
-              if (existingAppt) {
-                console.log("Existing appointment found, skipping duplicate creation.");
-                return `The appointment for ${customerName} at ${formatAppointmentDate(appointmentDate, businessTz)} is already on the calendar! I've confirmed it's all set.`;
+              if (conflict) {
+                const conflictEnd = new Date(conflict.startTime.getTime() + conflict.durationMinutes * 60000);
+                if (conflictEnd > appointmentDate) {
+                  // If it's the exact same contact, just say it's confirmed
+                  if (conflict.contactId === contact.id) {
+                    return `The appointment for ${customerName} at ${formatAppointmentDate(appointmentDate, businessTz)} is already on the calendar! I've confirmed it's all set.`;
+                  }
+                  return `That time is already booked! Please tell the user that the time is not available and ask them to pick another time.`;
+                }
               }
 
               const appointment = await prisma.appointment.create({
