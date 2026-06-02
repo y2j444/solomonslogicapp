@@ -60,7 +60,7 @@ const agent = defineAgent({
       }
 
       // Dial the prospect via LiveKit outbound SIP trunk (Telnyx)
-      const OUTBOUND_TRUNK_ID = process.env.LIVEKIT_SIP_OUTBOUND_TRUNK_ID || "ST_5ZjrYkLfvBzT";
+      const OUTBOUND_TRUNK_ID = process.env.LIVEKIT_SIP_OUTBOUND_TRUNK_ID || "ST_bVKKDE2q3S48";
       const lkUrl = (process.env.LIVEKIT_URL || "").replace("wss://", "https://");
       const sipClient = new SipClient(
         lkUrl,
