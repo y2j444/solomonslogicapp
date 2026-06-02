@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import { provisionNumberForUser } from "@/lib/telnyx";
+import { provisionNumberForUser, sendTelnyxSms } from "@/lib/telnyx";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -73,6 +73,16 @@ export async function POST(req: Request) {
             }
           } else {
             console.log(`[Telnyx] User ${session.metadata.userId} already has AIPhone: ${user.AIPhone}`);
+          }
+
+          // 3. Send SMS notification to Mike
+          const adminPhone = process.env.ADMIN_PHONE;
+          if (adminPhone) {
+            try {
+              await sendTelnyxSms(adminPhone, `🎉 New Signup: ${user?.email} just subscribed! Go configure their AI rules in the admin dashboard.`);
+            } catch (smsErr) {
+              console.error("[Stripe] Failed to send admin SMS:", smsErr);
+            }
           }
         }
         break;
