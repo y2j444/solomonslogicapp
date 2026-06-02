@@ -25,5 +25,142 @@
     "website": "https://donkennedyroofing.com",
     "status": "sent",
     "sentAt": "2026-06-02T14:07:00.000Z"
+  },
+  {
+    "business": "Interstate AC",
+    "industry": "HVAC",
+    "email": "info@interstateac.com",
+    "phone": "+16158022665",
+    "website": "https://interstateac.com",
+    "status": "scraped"
+  },
+  {
+    "business": "The Arcticom Group Nashville",
+    "industry": "HVAC",
+    "email": "nashville@arcticomgroup.com",
+    "phone": "+16152550604",
+    "website": "https://tag-nashville.com",
+    "status": "scraped"
+  },
+  {
+    "business": "615 Plumbing",
+    "industry": "Plumbing",
+    "email": "officecsr@615plumbing.com",
+    "phone": "+16156390298",
+    "website": "https://615plumbing.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Jack Ward & Sons Plumbing Co.",
+    "industry": "Plumbing",
+    "email": "maclain@wardp-m.com",
+    "phone": "+16152272811",
+    "website": "https://jackwardandsonsplumbing.com",
+    "status": "scraped"
+  },
+  {
+    "business": "TN Plumbing Solutions",
+    "industry": "Plumbing",
+    "email": "plumbingsolutions92@yahoo.com",
+    "phone": "+16158871501",
+    "website": "https://tnplumbingsolutions.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Above All Roofing Nashville",
+    "industry": "Roofing",
+    "email": "nashville@aarcroofing.com",
+    "phone": "",
+    "website": "https://above-all-roofing.com",
+    "status": "scraped"
+  },
+  {
+    "business": "CCC Roofing",
+    "industry": "Roofing",
+    "email": "randy@cccroofing.com",
+    "phone": "",
+    "website": "https://cccroofing.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Elite Roofing Company of Nashville",
+    "industry": "Roofing",
+    "email": "info@eliteroofingofnashville.com",
+    "phone": "",
+    "website": "https://eliteroofingofnashville.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Five Points Roofing",
+    "industry": "Roofing",
+    "email": "info@5prc.com",
+    "phone": "",
+    "website": "https://fivepointsroofing.com",
+    "status": "scraped"
+  },
+  {
+    "business": "H.E. Parmer Company",
+    "industry": "Roofing",
+    "email": "roofing@heparmer.com",
+    "phone": "",
+    "website": "https://heparmer.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Elevate Medical Spa",
+    "industry": "MedSpa",
+    "email": "info@elevatemedispa.com",
+    "phone": "+16154256340",
+    "website": "https://elevatemedispa.com",
+    "status": "scraped"
+  },
+  {
+    "business": "LaserDerm Medspa",
+    "industry": "MedSpa",
+    "email": "info@laserdermmedspa.com",
+    "phone": "+16154652219",
+    "website": "https://laserdermmedspa.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Master's Landscape Design",
+    "industry": "Landscaping",
+    "email": "info@masterslandscapedesign.com",
+    "phone": "+16152882052",
+    "website": "https://masterslandscapedesign.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Terra Landscape Company",
+    "industry": "Landscaping",
+    "email": "info@terralandscapellc.com",
+    "phone": "+16156501737",
+    "website": "https://terralandscapellc.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Park View Lawn Care & Landscaping",
+    "industry": "Landscaping",
+    "email": "service@parkviewlawncare.com",
+    "phone": "+16152609051",
+    "website": "https://parkviewlawncare.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Cornerstone Landscape Management",
+    "industry": "Landscaping",
+    "email": "cornerstonelandscapemanagement@yahoo.com",
+    "phone": "+16153529551",
+    "website": "https://cornerstonelandscapemanagement.com",
+    "status": "scraped"
+  },
+  {
+    "business": "Opportunity Landscapes and Nursery",
+    "industry": "Landscaping",
+    "email": "admin@opportunitylandscapesandnursery.com",
+    "phone": "+16159269728",
+    "website": "https://opportunitylandscapesandnursery.com",
+    "status": "scraped"
   }
 ]
+
