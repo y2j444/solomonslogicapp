@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { provisionNumberForUser, sendTelnyxSms } from "@/lib/telnyx";
+import { generateAIConfig } from "@/lib/ai-config-generator";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -52,12 +53,13 @@ export async function POST(req: Request) {
           });
           console.log(`[Stripe] Updated subscription for user ${session.metadata.userId}`);
 
-          // 2. Auto-provision a dedicated Telnyx phone number (if not already assigned)
+          // 2. Fetch full user profile
           const user = await prisma.user.findUnique({
             where: { id: session.metadata.userId },
-            select: { AIPhone: true, email: true },
+            select: { AIPhone: true, email: true, businessName: true, businessPhone: true, knowledgeBase: true },
           });
 
+          // 3. Auto-provision a dedicated Telnyx phone number (if not already assigned)
           if (!user?.AIPhone) {
             console.log(`[Telnyx] Provisioning number for user ${session.metadata.userId}...`);
             const provisionedNumber = await provisionNumberForUser("615");
@@ -75,11 +77,29 @@ export async function POST(req: Request) {
             console.log(`[Telnyx] User ${session.metadata.userId} already has AIPhone: ${user.AIPhone}`);
           }
 
-          // 3. Send SMS notification to Mike
+          // 4. Auto-generate AI knowledge base & call handling rules if not already set
+          if (!user?.knowledgeBase && user?.businessName) {
+            try {
+              console.log(`[AI Config] Auto-generating Sara config for ${user.businessName}...`);
+              const { knowledgeBase, callHandlingRules } = await generateAIConfig(
+                user.businessName,
+                user.businessPhone || ""
+              );
+              await prisma.user.update({
+                where: { id: session.metadata.userId },
+                data: { knowledgeBase, callHandlingRules },
+              });
+              console.log(`[AI Config] ✅ Sara configured for ${user.businessName}`);
+            } catch (aiErr) {
+              console.error("[AI Config] Failed to generate AI config:", aiErr);
+            }
+          }
+
+          // 5. Send SMS notification to Mike
           const adminPhone = process.env.ADMIN_PHONE;
           if (adminPhone) {
             try {
-              await sendTelnyxSms(adminPhone, `🎉 New Signup: ${user?.email} just subscribed! Go configure their AI rules in the admin dashboard.`);
+              await sendTelnyxSms(adminPhone, `🎉 New Signup! ${user?.businessName || user?.email} just subscribed. Sara's AI config was auto-generated. Review at app.solomonslogic.com/admin`);
             } catch (smsErr) {
               console.error("[Stripe] Failed to send admin SMS:", smsErr);
             }
