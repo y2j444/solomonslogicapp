@@ -67,5 +67,7 @@
 - **Fixed**: `telnyx.ts` restored `sendTelnyxSms` export used by appointments route for SMS confirmations
 - **Confirmed**: TypeScript compiles clean (0 errors) — safe to deploy
 - **Outreach**: Fired a second batch of 10 targeted SMS pitches to local Nashville roofing, plumbing, and HVAC businesses.
+- **Outreach**: Transitioned to 100% free outreach methods. User generated a Gmail App Password.
+- **Action**: Installed `nodemailer` and successfully blasted our first automated batch of free cold emails to 3 Nashville contractors (Maynard Plumbing, ABCO Roofing, Don Kennedy Roofing) via `solomonslogic@gmail.com`.
 
 ---
