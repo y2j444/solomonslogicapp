@@ -44,7 +44,7 @@
 ### Open Items / Needs Mike's Input
 - [ ] **Stripe keys** — need `STRIPE_SECRET_KEY` and `STRIPE_PUBLISHABLE_KEY` to enable billing
 - [ ] **Social media accounts** — Twitter/Instagram handles if Mike wants me to post there
-- [ ] **Mike's personal cell** — for me to text him immediately when a lead replies
+- [x] **Mike's personal cell** — +17169394226 (confirmed working June 2, 2026)
 
 ---
 
@@ -69,5 +69,13 @@
 - **Outreach**: Fired a second batch of 10 targeted SMS pitches to local Nashville roofing, plumbing, and HVAC businesses.
 - **Outreach**: Transitioned to 100% free outreach methods. User generated a Gmail App Password.
 - **Action**: Installed `nodemailer` and successfully blasted our first automated batch of free cold emails to 3 Nashville contractors (Maynard Plumbing, ABCO Roofing, Don Kennedy Roofing) via `solomonslogic@gmail.com`.
+
+---
+
+### Session: June 2, 2026
+- **Action**: Fully configured the AI outbound cold caller pipeline (`scratch/ai_cold_caller.ts`).
+- **Built**: Implemented the `/api/texml/outbound-pitch` route to connect outbound Telnyx calls directly to the LiveKit agent.
+- **Strategy**: SFO created a Sales Manual Strategy artifact for manual outreach while waiting for campaign approvals.
+- **Action**: Pushed the updated pipeline code to GitHub.
 
 ---

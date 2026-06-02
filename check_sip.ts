@@ -1,26 +1,12 @@
-import { SipClient } from 'livekit-server-sdk';
-import * as dotenv from 'dotenv';
-
+import dotenv from "dotenv";
 dotenv.config();
 
-const sipClient = new SipClient(
-    process.env.LIVEKIT_URL || '',
-    process.env.LIVEKIT_API_KEY || '',
-    process.env.LIVEKIT_API_SECRET || ''
-);
-
 async function main() {
-    try {
-        console.log("Fetching SIP Dispatch Rules...");
-        const rules = await sipClient.listSipDispatchRule();
-        console.log("Dispatch Rules:", JSON.stringify(rules, null, 2));
-
-        console.log("\nFetching SIP Trunks...");
-        const trunks = await sipClient.listSipTrunk();
-        console.log("SIP Trunks:", JSON.stringify(trunks, null, 2));
-    } catch (e) {
-        console.error("Error:", e);
-    }
+  const key = process.env.TELNYX_API_KEY;
+  const res = await fetch("https://api.telnyx.com/v2/phone_numbers?filter[phone_number]=%2B16157163328", {
+    headers: { Authorization: "Bearer " + key }
+  });
+  const data = await res.json();
+  console.log(JSON.stringify(data, null, 2));
 }
-
 main();
