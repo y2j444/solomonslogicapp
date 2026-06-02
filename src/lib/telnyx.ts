@@ -100,13 +100,10 @@ export async function purchaseNumber(phoneNumber: string): Promise<TelnyxNumber 
 }
 
 /**
- * Configure the voice webhook on a purchased number so inbound calls
- * are routed to /api/texml/voice → LiveKit SIP.
+ * Configure the purchased number so inbound calls are routed to LiveKit SIP,
+ * and SMS is routed to the correct webhook.
  */
 export async function configureNumberWebhook(phoneNumber: string): Promise<boolean> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.solomonslogic.com";
-  const webhookUrl = `${appUrl}/api/texml/voice`;
-
   // Look up the number record in Telnyx by phone number string
   const listRes = await fetch(
     `${TELNYX_API_BASE}/phone_numbers?filter[phone_number]=${encodeURIComponent(phoneNumber)}&page[size]=5`,
@@ -120,21 +117,18 @@ export async function configureNumberWebhook(phoneNumber: string): Promise<boole
     return false;
   }
 
-  // Set the number to use TeXML (webhook-based voice handling)
-  await fetch(`${TELNYX_API_BASE}/phone_numbers/${record.id}/voice`, {
-    method: "PATCH",
-    headers: telnyxHeaders(),
-    body: JSON.stringify({
-      handler: "texml",
-      techprefix_enabled: false,
-    }),
-  });
+  // Hardcoded known good connection & profile from the demo number setup
+  const LIVEKIT_CONNECTION_ID = "2953272336683369806";
+  const MESSAGING_PROFILE_ID = "40019e6f-b702-4f94-9fc6-8ee539de1a67";
 
-  // Also ensure the number is generally updated
+  // 1. Assign to the LiveKit SIP Connection
   const updateRes = await fetch(`${TELNYX_API_BASE}/phone_numbers/${record.id}`, {
     method: "PATCH",
     headers: telnyxHeaders(),
-    body: JSON.stringify({ hd_voice_enabled: true }),
+    body: JSON.stringify({ 
+      connection_id: LIVEKIT_CONNECTION_ID,
+      hd_voice_enabled: true 
+    }),
   });
 
   if (!updateRes.ok) {
@@ -142,7 +136,21 @@ export async function configureNumberWebhook(phoneNumber: string): Promise<boole
     console.error("[Telnyx] Number update failed:", err);
   }
 
-  console.log(`[Telnyx] Configured ${phoneNumber} → ${webhookUrl}`);
+  // 2. Assign to the correct Messaging Profile for SMS routing
+  const msgRes = await fetch(`${TELNYX_API_BASE}/phone_numbers/${record.id}/messaging`, {
+    method: "PATCH",
+    headers: telnyxHeaders(),
+    body: JSON.stringify({
+      messaging_profile_id: MESSAGING_PROFILE_ID
+    }),
+  });
+
+  if (!msgRes.ok) {
+    const err = await msgRes.json();
+    console.error("[Telnyx] Messaging profile assignment failed:", err);
+  }
+
+  console.log(`[Telnyx] Configured ${phoneNumber} → Connection: ${LIVEKIT_CONNECTION_ID}`);
   return true;
 }
 
