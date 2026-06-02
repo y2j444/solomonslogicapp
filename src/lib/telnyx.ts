@@ -176,7 +176,7 @@ export async function configureNumberWebhook(phoneNumber: string): Promise<boole
     }, {
       name: `Auto Rule ${withPlus}`,
       trunkIds: [trunk.sipTrunkId],
-      roomConfig: { agents: [{ agentName: "solomon" }] }
+      roomConfig: { agents: [{ agentName: "solomon" } as any] } as any
     });
     
     console.log(`[LiveKit] Provisioned SIP Trunk and Dispatch Rule for ${withPlus}`);
