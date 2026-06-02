@@ -66,5 +66,6 @@
   4. Onboarding page now shows their personal number (e.g., `*72 +16151234567`) instead of the demo number
 - **Fixed**: `telnyx.ts` restored `sendTelnyxSms` export used by appointments route for SMS confirmations
 - **Confirmed**: TypeScript compiles clean (0 errors) — safe to deploy
+- **Outreach**: Fired a second batch of 10 targeted SMS pitches to local Nashville roofing, plumbing, and HVAC businesses.
 
 ---
