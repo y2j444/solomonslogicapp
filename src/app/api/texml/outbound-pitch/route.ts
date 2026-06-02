@@ -17,7 +17,7 @@ async function handleRequest(req: Request) {
   const xmlResponse = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Dial>
-        <Sip>${sipUri};X-Mode=outbound_pitch</Sip>
+        <Sip>${sipUri}?x-mode=outbound_pitch</Sip>
     </Dial>
 </Response>`;
 
