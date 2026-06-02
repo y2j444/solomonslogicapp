@@ -236,6 +236,15 @@ export default function AdminPage() {
 
   return (
     <AppShell title="Admin Panel" subtitle="Manage all Solomon's Logic customers">
+      {/* Quick Links */}
+      <div className="mb-6 flex items-center gap-3">
+        <a
+          href="/admin/free-leads"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#355cc9]/20 border border-[#355cc9]/30 px-4 py-2 text-sm font-medium text-[#5b7cfa] hover:bg-[#355cc9]/30 transition-all"
+        >
+          📋 Free Outreach CRM
+        </a>
+      </div>
       {/* Stats Row */}
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[

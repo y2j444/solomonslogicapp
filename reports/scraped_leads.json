@@ -1,0 +1,29 @@
+[
+  {
+    "business": "Maynard Plumbing, Heating & Cooling",
+    "industry": "HVAC & Plumbing",
+    "email": "customerservice@themaynardman.com",
+    "phone": "+16152552527",
+    "website": "https://themaynardman.com",
+    "status": "sent",
+    "sentAt": "2026-06-02T14:07:00.000Z"
+  },
+  {
+    "business": "ABCO Roofing",
+    "industry": "Roofing",
+    "email": "jamie@abcoroofingtn.com",
+    "phone": "",
+    "website": "https://abcoroofingtn.com",
+    "status": "sent",
+    "sentAt": "2026-06-02T14:07:00.000Z"
+  },
+  {
+    "business": "Don Kennedy Roofing",
+    "industry": "Roofing",
+    "email": "contact@donkennedyroofing.com",
+    "phone": "",
+    "website": "https://donkennedyroofing.com",
+    "status": "sent",
+    "sentAt": "2026-06-02T14:07:00.000Z"
+  }
+]
