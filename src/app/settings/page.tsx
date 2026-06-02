@@ -251,7 +251,7 @@ export default function SettingsPage() {
                           : "bg-[#355cc9] text-white hover:bg-[#456ce0] shadow-blue-500/20"
                       }`}
                     >
-                      {isActive ? "Active Plan" : "Subscribe Now"}
+                      {isActive ? "Active Plan" : "Start 1-Month Free Trial"}
                     </button>
                   </div>
                 );

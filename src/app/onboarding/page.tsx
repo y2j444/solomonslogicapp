@@ -15,7 +15,7 @@ type Profile = {
 
 const steps = [
   { n: 1, label: "Your Info" },
-  { n: 2, label: "Subscribe" },
+  { n: 2, label: "Start Trial" },
   { n: 3, label: "Forward Number" },
   { n: 4, label: "Sara Goes Live" },
 ];
@@ -217,7 +217,7 @@ export default function OnboardingPage() {
               <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${step > 2 ? "bg-emerald-500 text-white" : step === 2 ? "bg-[#355cc9] text-white" : "bg-white/10 text-zinc-500"}`}>
                 {step > 2 ? "✓" : "2"}
               </span>
-              <span className="font-semibold">Subscribe — $199/mo</span>
+              <span className="font-semibold">Start 1-Month Free Trial</span>
             </div>
             {step > 2 && <span className="text-xs text-emerald-400 font-medium">Active</span>}
           </div>
@@ -247,7 +247,7 @@ export default function OnboardingPage() {
                 }}
                 className="w-full rounded-lg bg-[#355cc9] py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:bg-[#456ce0] transition-all"
               >
-                Subscribe Now — $199/mo →
+                Start 1-Month Free Trial →
               </button>
               <p className="text-center text-[11px] text-zinc-600">Secured by Stripe · Cancel anytime</p>
             </div>

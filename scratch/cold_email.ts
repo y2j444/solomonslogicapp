@@ -90,7 +90,7 @@ function buildEmail(lead: Lead): { subject: string; html: string } {
       <li>✅ Setup takes 3 minutes — just forward your calls</li>
     </ul>
 
-    <p>It's <strong>$199/month</strong> — less than one lost job per month likely costs you. No contracts, cancel anytime.</p>
+    <p>You can <strong>try it for a month completely free</strong>. After that, it's $199/month — less than one lost job per month likely costs you. No contracts, cancel anytime.</p>
 
     <p>If you're interested, you can get started at <a href="https://app.solomonslogic.com" style="color: #355cc9;">app.solomonslogic.com</a> or just reply to this email and I'll personally walk you through it.</p>
 

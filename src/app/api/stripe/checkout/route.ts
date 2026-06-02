@@ -61,6 +61,7 @@ export async function POST(req: Request) {
       success_url: `${appUrl}/settings?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${appUrl}/settings?canceled=true`,
       subscription_data: {
+        trial_period_days: 30,
         metadata: {
           clerkUserId: userId,
           userId: user.id,
