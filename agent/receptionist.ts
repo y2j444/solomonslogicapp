@@ -145,7 +145,7 @@ ${knowledgeBase}
 Call Handling Rules:
 ${callHandlingRules}
 
-- NEVER say "one second" or "let me check" while running a tool. Just run the tool in silence.
+- Before calling the 'check_availability' or 'book_appointment' tools, you MUST say a filler phrase like "Hold on a second while I check if that time is available" or "Let me pull up the calendar real quick." so the caller isn't waiting in silence.
 - Once the tool finishes, report the result IMMEDIATELY and ask for the next step.
 - Example: "That time is available! Should I go ahead and book that for you?"
 - Be direct, professional, and fast.`,
@@ -328,10 +328,9 @@ ${callHandlingRules}
       turnHandling: {
         preemptiveGeneration: { enabled: false },
         interruption: {
-          // 1000ms + 3 words: prevents background noise / breathing from triggering barge-in
-          // and aborting the TTS stream mid-sentence.
-          minDuration: 1000,
-          minWords: 3,
+          // Decreased to make the AI respond faster to standard questions
+          minDuration: 500,
+          minWords: 1,
           resumeFalseInterruption: true,
           falseInterruptionTimeout: 2000,
         },
