@@ -107,7 +107,7 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
 
       const session = new voice.AgentSession({
         stt: new deepgram.STT(),
-        tts: new openai.TTS({ voice: "onyx" }),
+        tts: new openai.TTS({ voice: "echo" }),
         llm: new openai.LLM({ model: "gpt-4o" }),
         useTtsAlignedTranscript: false,
         turnHandling: {
