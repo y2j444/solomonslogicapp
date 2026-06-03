@@ -6,7 +6,9 @@
     "phone": "+16152552527",
     "website": "https://themaynardman.com",
     "status": "sent",
-    "sentAt": "2026-06-02T14:07:00.000Z"
+    "sentAt": "2026-06-02T14:07:00.000Z",
+    "smsSentAt": "2026-06-02T20:48:57.486Z",
+    "calledAt": "2026-06-02T20:49:42.162Z"
   },
   {
     "business": "ABCO Roofing",
@@ -32,7 +34,10 @@
     "email": "info@interstateac.com",
     "phone": "+16158022665",
     "website": "https://interstateac.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:12.430Z",
+    "smsSentAt": "2026-06-02T20:49:00.888Z",
+    "calledAt": "2026-06-02T20:50:12.653Z"
   },
   {
     "business": "The Arcticom Group Nashville",
@@ -40,7 +45,10 @@
     "email": "nashville@arcticomgroup.com",
     "phone": "+16152550604",
     "website": "https://tag-nashville.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:15.236Z",
+    "smsSentAt": "2026-06-02T20:49:04.338Z",
+    "calledAt": "2026-06-02T20:50:43.320Z"
   },
   {
     "business": "615 Plumbing",
@@ -48,7 +56,10 @@
     "email": "officecsr@615plumbing.com",
     "phone": "+16156390298",
     "website": "https://615plumbing.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:17.877Z",
+    "smsSentAt": "2026-06-02T20:49:07.728Z",
+    "calledAt": "2026-06-02T20:51:14.158Z"
   },
   {
     "business": "Jack Ward & Sons Plumbing Co.",
@@ -56,7 +67,10 @@
     "email": "maclain@wardp-m.com",
     "phone": "+16152272811",
     "website": "https://jackwardandsonsplumbing.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:20.702Z",
+    "smsSentAt": "2026-06-02T20:49:11.137Z",
+    "calledAt": "2026-06-02T20:51:44.774Z"
   },
   {
     "business": "TN Plumbing Solutions",
@@ -64,7 +78,10 @@
     "email": "plumbingsolutions92@yahoo.com",
     "phone": "+16158871501",
     "website": "https://tnplumbingsolutions.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:23.484Z",
+    "smsSentAt": "2026-06-02T20:49:14.561Z",
+    "calledAt": "2026-06-02T20:52:15.417Z"
   },
   {
     "business": "Above All Roofing Nashville",
@@ -72,7 +89,8 @@
     "email": "nashville@aarcroofing.com",
     "phone": "",
     "website": "https://above-all-roofing.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:26.349Z"
   },
   {
     "business": "CCC Roofing",
@@ -80,7 +98,8 @@
     "email": "randy@cccroofing.com",
     "phone": "",
     "website": "https://cccroofing.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:29.217Z"
   },
   {
     "business": "Elite Roofing Company of Nashville",
@@ -88,7 +107,8 @@
     "email": "info@eliteroofingofnashville.com",
     "phone": "",
     "website": "https://eliteroofingofnashville.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:32.017Z"
   },
   {
     "business": "Five Points Roofing",
@@ -96,7 +116,8 @@
     "email": "info@5prc.com",
     "phone": "",
     "website": "https://fivepointsroofing.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:34.718Z"
   },
   {
     "business": "H.E. Parmer Company",
@@ -104,7 +125,8 @@
     "email": "roofing@heparmer.com",
     "phone": "",
     "website": "https://heparmer.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:37.443Z"
   },
   {
     "business": "Elevate Medical Spa",
@@ -112,7 +134,10 @@
     "email": "info@elevatemedispa.com",
     "phone": "+16154256340",
     "website": "https://elevatemedispa.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:40.260Z",
+    "smsSentAt": "2026-06-02T20:49:17.906Z",
+    "calledAt": "2026-06-02T20:52:46.241Z"
   },
   {
     "business": "LaserDerm Medspa",
@@ -120,7 +145,10 @@
     "email": "info@laserdermmedspa.com",
     "phone": "+16154652219",
     "website": "https://laserdermmedspa.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:43.103Z",
+    "smsSentAt": "2026-06-02T20:49:21.276Z",
+    "calledAt": "2026-06-02T20:53:17.111Z"
   },
   {
     "business": "Master's Landscape Design",
@@ -128,7 +156,10 @@
     "email": "info@masterslandscapedesign.com",
     "phone": "+16152882052",
     "website": "https://masterslandscapedesign.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:45.885Z",
+    "smsSentAt": "2026-06-02T20:49:24.669Z",
+    "calledAt": "2026-06-02T20:53:47.651Z"
   },
   {
     "business": "Terra Landscape Company",
@@ -136,7 +167,10 @@
     "email": "info@terralandscapellc.com",
     "phone": "+16156501737",
     "website": "https://terralandscapellc.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:48.790Z",
+    "smsSentAt": "2026-06-02T20:49:28.072Z",
+    "calledAt": "2026-06-02T20:54:18.187Z"
   },
   {
     "business": "Park View Lawn Care & Landscaping",
@@ -144,7 +178,10 @@
     "email": "service@parkviewlawncare.com",
     "phone": "+16152609051",
     "website": "https://parkviewlawncare.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:51.491Z",
+    "smsSentAt": "2026-06-02T20:49:31.501Z",
+    "calledAt": "2026-06-02T20:54:49.005Z"
   },
   {
     "business": "Cornerstone Landscape Management",
@@ -152,7 +189,10 @@
     "email": "cornerstonelandscapemanagement@yahoo.com",
     "phone": "+16153529551",
     "website": "https://cornerstonelandscapemanagement.com",
-    "status": "scraped"
+    "status": "sent",
+    "sentAt": "2026-06-02T20:48:54.400Z",
+    "smsSentAt": "2026-06-02T20:49:34.903Z",
+    "calledAt": "2026-06-02T20:55:19.670Z"
   },
   {
     "business": "Opportunity Landscapes and Nursery",
@@ -161,6 +201,8 @@
     "phone": "+16159269728",
     "website": "https://opportunitylandscapesandnursery.com",
     "status": "sent",
-    "sentAt": "2026-06-02T15:21:29.175Z"
+    "sentAt": "2026-06-02T15:21:29.175Z",
+    "smsSentAt": "2026-06-02T20:49:38.325Z",
+    "calledAt": "2026-06-02T20:55:50.169Z"
   }
 ]

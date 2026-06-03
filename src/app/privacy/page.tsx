@@ -1,110 +1,70 @@
-export const metadata = {
-  title: "Privacy Policy | Solomon's Logic",
-  description: "Privacy Policy for Solomon's Logic AI Receptionist service.",
-};
+import React from "react";
+import Link from "next/link";
 
-export default function PrivacyPage() {
+export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-screen bg-gray-950 text-gray-100 py-16 px-4">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2 text-white">Privacy Policy</h1>
-        <p className="text-gray-400 mb-10">Last updated: June 2, 2026</p>
+    <div className="min-h-screen bg-black text-zinc-300 py-16 px-6 sm:px-12 lg:px-24">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <div className="border-b border-zinc-800 pb-8">
+          <Link href="/" className="text-blue-500 hover:text-blue-400 font-medium mb-8 inline-block">
+            &larr; Back to Home
+          </Link>
+          <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
+          <p className="text-zinc-500">Last Updated: June 2026</p>
+        </div>
 
-        <section className="space-y-8 text-gray-300 leading-relaxed">
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">1. Who We Are</h2>
-            <p>
-              Solomon&apos;s Logic (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) operates the AI Receptionist
-              platform available at <a href="https://app.solomonslogic.com" className="text-blue-400 underline">app.solomonslogic.com</a>.
-              We provide AI-powered answering, SMS, and appointment-booking services to small businesses.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">2. Information We Collect</h2>
-            <ul className="list-disc pl-6 space-y-1">
-              <li>Name, email address, and phone number when you sign up</li>
-              <li>Business name, industry, and contact preferences</li>
-              <li>Call recordings and transcripts processed by our AI</li>
-              <li>SMS message content sent to or from your dedicated number</li>
-              <li>Payment information processed securely via Stripe</li>
-              <li>Usage data and logs to improve service quality</li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">3. How We Use Your Information</h2>
-            <ul className="list-disc pl-6 space-y-1">
-              <li>To provide and improve our AI Receptionist service</li>
-              <li>To send appointment reminders and lead follow-up SMS messages on your behalf</li>
-              <li>To process payments and manage your subscription</li>
-              <li>To send you service updates and support communications</li>
-              <li>To comply with legal obligations</li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">4. SMS Messaging</h2>
-            <p>
-              When you or your customers opt in to receive SMS messages through our platform,
-              we use that phone number solely to deliver the messages you&apos;ve requested
-              (appointment confirmations, lead follow-ups, etc.).
-            </p>
-            <p className="mt-2 font-medium text-white">
-              Your mobile information will not be sold or shared with third parties for
-              promotional or marketing purposes. All SMS opt-out requests (via STOP keyword)
-              are honored immediately.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">5. Data Sharing</h2>
-            <p>We do not sell your personal data. We share data only with:</p>
-            <ul className="list-disc pl-6 space-y-1 mt-2">
-              <li><strong>Telnyx</strong> — phone number provisioning and SMS delivery</li>
-              <li><strong>LiveKit</strong> — real-time voice call infrastructure</li>
-              <li><strong>OpenAI</strong> — AI language processing for call and SMS responses</li>
-              <li><strong>Deepgram</strong> — speech-to-text transcription</li>
-              <li><strong>Stripe</strong> — payment processing</li>
-              <li><strong>Supabase</strong> — secure database hosting</li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">6. Data Retention</h2>
-            <p>
-              We retain your data for as long as your account is active or as needed to provide
-              services. You may request deletion of your data at any time by contacting us at{" "}
-              <a href="mailto:solomonslogic@gmail.com" className="text-blue-400 underline">solomonslogic@gmail.com</a>.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">7. Security</h2>
-            <p>
-              We use industry-standard encryption and security practices to protect your data.
-              All data is stored in secure, SOC 2-compliant infrastructure.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">8. Your Rights</h2>
-            <p>You have the right to access, correct, or delete your personal data at any time.
-              To exercise these rights, contact us at{" "}
-              <a href="mailto:solomonslogic@gmail.com" className="text-blue-400 underline">solomonslogic@gmail.com</a>.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-2">9. Contact Us</h2>
-            <p>
-              Solomon&apos;s Logic<br />
-              Email: <a href="mailto:solomonslogic@gmail.com" className="text-blue-400 underline">solomonslogic@gmail.com</a><br />
-              Website: <a href="https://app.solomonslogic.com" className="text-blue-400 underline">app.solomonslogic.com</a>
-            </p>
-          </div>
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-white">1. Introduction</h2>
+          <p>
+            Welcome to Solomon's Logic. We respect your privacy and are committed to protecting your personal data. 
+            This privacy policy will inform you as to how we look after your personal data when you visit our website and tell you about your privacy rights.
+          </p>
         </section>
+
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-white">2. The Data We Collect About You</h2>
+          <p>
+            We may collect, use, store and transfer different kinds of personal data about you which we have grouped together follows:
+          </p>
+          <ul className="list-disc pl-5 space-y-2 text-zinc-400">
+            <li><strong>Identity Data</strong> includes first name, last name, username or similar identifier.</li>
+            <li><strong>Contact Data</strong> includes billing address, email address and telephone numbers.</li>
+            <li><strong>Technical Data</strong> includes internet protocol (IP) address, browser type and version, time zone setting and location.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-4 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+          <h2 className="text-2xl font-semibold text-white">3. SMS & Mobile Information (10DLC Compliance)</h2>
+          <p className="font-medium text-emerald-400">
+            No mobile information will be shared with third parties/affiliates for marketing/promotional purposes. All the above categories exclude text messaging originator opt-in data and consent; this information will not be shared with any third parties.
+          </p>
+          <p>
+            When you opt-in to receive SMS messages from Solomon's Logic, we strictly use this consent to communicate with you regarding your inquiries, account status, and requested services. We do not sell, rent, or trade your phone number.
+          </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-white">4. How We Use Your Data</h2>
+          <p>We will only use your personal data when the law allows us to. Most commonly, we will use your personal data in the following circumstances:</p>
+          <ul className="list-disc pl-5 space-y-2 text-zinc-400">
+            <li>Where we need to perform the contract we are about to enter into or have entered into with you.</li>
+            <li>Where it is necessary for our legitimate interests (or those of a third party) and your interests and fundamental rights do not override those interests.</li>
+            <li>Where we need to comply with a legal or regulatory obligation.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-white">5. Contact Details</h2>
+          <p>
+            If you have any questions about this privacy policy or our privacy practices, please contact us at:
+            <br />
+            Email: privacy@solomonslogic.com
+            <br />
+            Phone: (615) 716-3328
+          </p>
+        </section>
+
       </div>
-    </main>
+    </div>
   );
 }

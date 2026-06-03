@@ -79,3 +79,9 @@
 - **Action**: Pushed the updated pipeline code to GitHub.
 
 ---
+
+- **June 2, 2026 (Part 2)**:
+  - Fixed Telnyx outbound trunk authentication (assigned Outbound Voice Profile).
+  - Successfully deployed full multi-channel outbound campaign (scratch/deploy_campaign.ts).
+  - Total touchpoints: 16 cold emails, 13 SMS pitches, 13 LiveKit AI calls by Marcus.
+  - Social media generation succeeded, but Playwright automation failed (LinkedIn strict mode violation, Facebook account disabled/checkpointed). Provided user with manual copy.
