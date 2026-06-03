@@ -5,6 +5,8 @@ async function build() {
     entryPoints: [
       'agent/index.ts',
       'agent/receptionist.ts',
+      'agent/sales-pitcher.ts',
+      'agent/vending-pitcher.ts',
       'agent/prisma.ts',
       'agent/appointment-time.ts',
     ],
