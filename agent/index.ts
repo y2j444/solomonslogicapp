@@ -15,7 +15,7 @@ if (!isProduction) {
   process.env.DEBUG = "livekit:*";
 }
 
-// AGENT_TYPE can be "receptionist" (default) or "sales-pitcher"
+// AGENT_TYPE can be "receptionist" (default), "sales-pitcher", or "vending-pitcher"
 const agentType = process.env.AGENT_TYPE || "receptionist";
 
 console.log(`Launching Solomon Agent (type=${agentType})...`);
@@ -29,6 +29,9 @@ let agentName: string;
 if (agentType === "sales-pitcher") {
   agentFile = isDev ? "sales-pitcher.ts" : "sales-pitcher.js";
   agentName = "sales-pitcher";
+} else if (agentType === "vending-pitcher") {
+  agentFile = isDev ? "vending-pitcher.ts" : "vending-pitcher.js";
+  agentName = "vending-pitcher";
 } else {
   agentFile = isDev ? "receptionist.ts" : "receptionist.js";
   agentName = "solomon";
