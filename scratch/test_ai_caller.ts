@@ -54,7 +54,7 @@ async function main() {
       }
     );
 
-    console.log(`\n✅ Dispatch created! ID: ${dispatch.dispatchId}`);
+    console.log(`\n✅ Dispatch created! ID: ${dispatch.id}`);
     console.log(`\n📲 Your phone (${TARGET_PHONE}) will ring in ~5 seconds.`);
     console.log("   Pick up and Marcus will pitch you!\n");
     console.log("Press Ctrl+C to stop monitoring.");
