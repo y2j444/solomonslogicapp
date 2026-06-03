@@ -131,13 +131,14 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
       await session.start({ agent: salesAgent, room: ctx.room });
       console.log("[Vending Pitcher] Session started — Sara is live!");
 
-      const greeting = session.say(
-        `Hey, is this ${leadName}? Hey — my name's Sara, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new smart vending machines in the area and I thought ${businessName} would be a great fit. Got literally 60 seconds?`
-      );
+      // With Realtime API, use generateReply() to trigger Sara's opening line
+      // session.say() requires a TTS model which Realtime API handles internally
       try {
-        await greeting.waitForPlayout();
+        await session.generateReply({
+          instructions: `Say exactly this opening line to start the call: "Hey, is this ${leadName}? Hey — my name's Sara, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new smart vending machines in the area and I thought ${businessName} would be a great fit. Got literally 60 seconds?"`,
+        });
       } catch (e) {
-        console.error("[Vending Pitcher] Greeting error:", e);
+        console.error("[Vending Pitcher] Opening greeting error:", e);
       }
 
       const hb = setInterval(() => console.log("[Vending Pitcher] heartbeat"), 10_000);
