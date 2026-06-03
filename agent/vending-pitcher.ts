@@ -105,16 +105,10 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
         tools: {},
       });
 
-      const cartesia = await import("@livekit/agents-plugin-cartesia");
-
       const session = new voice.AgentSession({
         stt: new deepgram.STT(),
-        // Cartesia = continuous audio streaming, no chunk gaps = no choppiness on phone calls
-        tts: new cartesia.TTS({
-          voice: "b7d50908-b17c-442d-ad8d-810c63997ed9", // "Laidback Man" - natural conversational male
-          model: "sonic-2",
-        }),
-        llm: new openai.LLM({ model: "gpt-4o-mini" }), // fast responses
+        tts: new openai.TTS({ voice: "fable", model: "tts-1" }),
+        llm: new openai.LLM({ model: "gpt-4o-mini" }),
         useTtsAlignedTranscript: false,
         turnHandling: {
           preemptiveGeneration: { enabled: true },
