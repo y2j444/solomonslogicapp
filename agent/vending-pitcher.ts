@@ -107,16 +107,19 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
 
       const session = new voice.AgentSession({
         stt: new deepgram.STT(),
-        tts: new openai.TTS({ voice: "echo", model: "tts-1" }), // tts-1 = low latency, tts-1-hd = high quality
-        llm: new openai.LLM({ model: "gpt-4o-mini" }), // gpt-4o-mini = much faster responses = less choppiness
+        tts: new openai.TTS({ voice: "echo", model: "tts-1" }), // tts-1 = low latency
+        llm: new openai.LLM({ model: "gpt-4o-mini" }), // faster responses
         useTtsAlignedTranscript: false,
         turnHandling: {
-          preemptiveGeneration: { enabled: false },
+          // Pre-generate responses while user is still speaking = less gap
+          preemptiveGeneration: { enabled: true },
           interruption: {
-            minDuration: 400,
-            minWords: 1,
+            // Require longer speech + more words before treating it as a real interruption
+            // This prevents background noise / breathing from cutting Marcus off
+            minDuration: 800,
+            minWords: 3,
             resumeFalseInterruption: true,
-            falseInterruptionTimeout: 2000,
+            falseInterruptionTimeout: 1000,
           },
         },
       });
