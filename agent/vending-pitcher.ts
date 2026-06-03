@@ -109,7 +109,7 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
       const session = new voice.AgentSession({
         llm: new openai.realtime.RealtimeModel({
           voice: "coral",  // warm, natural female voice
-          model: "gpt-4o-realtime-preview",
+          model: "gpt-4o-mini-realtime-preview-2024-12-17",
           inputAudioNoiseReduction: { type: "near_field" },
           turnDetection: {
             type: "server_vad",
