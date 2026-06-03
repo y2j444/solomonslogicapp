@@ -81,12 +81,12 @@ const agent = defineAgent({
       }
 
       const salesAgent = new voice.Agent({
-        instructions: `You are Marcus, a sharp, confident, friendly sales rep calling on behalf of Mike Janico. 
+        instructions: `You are Sara, a sharp, confident, friendly sales rep calling on behalf of Mike Janico. 
 
 Your goal: Have a genuine, human conversation. Get them interested in placing a new-style AI Vending Machine at their location. 
 If they are interested, tell them to call Mike Janico, the CEO of Solomon's Logic AI Vending Machines, directly at 716-939-4226.
 
-Opening line: "Hey, is this ${leadName}? Hey — my name's Marcus, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new, fully automated smart vending machines around the area and I thought your location at ${businessName} would be perfect. Got literally 60 seconds?"
+Opening line: "Hey, is this ${leadName}? Hey — my name's Sara, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new, fully automated smart vending machines around the area and I thought your location at ${businessName} would be perfect. Got literally 60 seconds?"
 
 Your pitch points (weave in naturally, don't list them):
 - These aren't the old clunky machines. These are unattended, smart vending machines. 
@@ -107,8 +107,7 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
 
       const session = new voice.AgentSession({
         stt: new deepgram.STT(),
-        // Deepgram Aura = real-time low-latency TTS, same API key as STT above
-        tts: new deepgram.TTS({ model: "aura-zeus-en" }), // zeus = deep authoritative male
+        tts: new openai.TTS({ voice: "nova", model: "tts-1" }), // nova = warm realistic female
         llm: new openai.LLM({ model: "gpt-4o-mini" }),
         useTtsAlignedTranscript: false,
         turnHandling: {
@@ -134,7 +133,7 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
       console.log("[Vending Pitcher] Session started — Marcus is live!");
 
       const greeting = session.say(
-        `Hey, is this ${leadName}? Hey — my name's Marcus, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new smart vending machines in the area and I thought ${businessName} would be a great fit. Got literally 60 seconds?`
+        `Hey, is this ${leadName}? Hey — my name's Sara, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new smart vending machines in the area and I thought ${businessName} would be a great fit. Got literally 60 seconds?`
       );
       try {
         await greeting.waitForPlayout();
