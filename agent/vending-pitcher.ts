@@ -107,8 +107,8 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
 
       const session = new voice.AgentSession({
         stt: new deepgram.STT(),
-        tts: new openai.TTS({ voice: "echo" }),
-        llm: new openai.LLM({ model: "gpt-4o" }),
+        tts: new openai.TTS({ voice: "echo", model: "tts-1" }), // tts-1 = low latency, tts-1-hd = high quality
+        llm: new openai.LLM({ model: "gpt-4o-mini" }), // gpt-4o-mini = much faster responses = less choppiness
         useTtsAlignedTranscript: false,
         turnHandling: {
           preemptiveGeneration: { enabled: false },
