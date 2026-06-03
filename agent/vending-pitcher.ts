@@ -6,8 +6,7 @@ dotenv.config();
 
 /**
  * Outbound cold-call sales agent for AI Vending Machines.
- * Uses OpenAI Realtime API (gpt-4o-realtime-preview) — speech-to-speech
- * with zero pipeline latency. No STT → LLM → TTS chain = no choppiness.
+ * Uses a deep, authoritative male voice (OpenAI "onyx").
  */
 const agent = defineAgent({
   entry: async (ctx: any) => {
@@ -42,8 +41,9 @@ const agent = defineAgent({
 
       console.log(`[Vending Pitcher] Will call ${targetPhone} (${businessName})`);
 
-      const { voice } = await import("@livekit/agents");
+      const { voice, llm } = await import("@livekit/agents");
       const openai = await import("@livekit/agents-plugin-openai");
+      const deepgram = await import("@livekit/agents-plugin-deepgram");
       const { SipClient } = await import("livekit-server-sdk");
 
       try {
@@ -81,15 +81,15 @@ const agent = defineAgent({
       }
 
       const salesAgent = new voice.Agent({
-        instructions: `You are Sara, a sharp, confident, friendly sales rep calling on behalf of Mike Janico.
+        instructions: `You are Sara, a sharp, confident, friendly sales rep calling on behalf of Mike Janico. 
 
-Your goal: Have a genuine, human conversation. Get them interested in placing a new-style AI Vending Machine at their location.
+Your goal: Have a genuine, human conversation. Get them interested in placing a new-style AI Vending Machine at their location. 
 If they are interested, tell them to call Mike Janico, the CEO of Solomon's Logic AI Vending Machines, directly at 716-939-4226.
 
 Opening line: "Hey, is this ${leadName}? Hey — my name's Sara, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new, fully automated smart vending machines around the area and I thought your location at ${businessName} would be perfect. Got literally 60 seconds?"
 
 Your pitch points (weave in naturally, don't list them):
-- These aren't the old clunky machines. These are unattended, smart vending machines.
+- These aren't the old clunky machines. These are unattended, smart vending machines. 
 - You can use Apple Pay, Google Pay, or a credit card to unlock the door, grab whatever you want, and just walk away. It automatically charges you. Exactly like going to a modern convenience store.
 - It's a huge amenity for your staff and customers, zero cost to you to place it, and we handle all the stocking and maintenance.
 
@@ -105,19 +105,20 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
         tools: {},
       });
 
-      // OpenAI Realtime API — speech-to-speech, no pipeline, zero choppiness
       const session = new voice.AgentSession({
-        llm: new openai.realtime.RealtimeModel({
-          voice: "coral",  // warm, natural female voice
-          model: "gpt-4o-mini-realtime-preview-2024-12-17",
-          inputAudioNoiseReduction: { type: "near_field" },
-          turnDetection: {
-            type: "server_vad",
-            threshold: 0.5,
-            silence_duration_ms: 600,
-            prefix_padding_ms: 200,
+        stt: new deepgram.STT(),
+        tts: new openai.TTS({ voice: "nova", model: "tts-1" }), // nova = warm realistic female
+        llm: new openai.LLM({ model: "gpt-4o-mini" }),
+        useTtsAlignedTranscript: false,
+        turnHandling: {
+          preemptiveGeneration: { enabled: true },
+          interruption: {
+            minDuration: 800,
+            minWords: 3,
+            resumeFalseInterruption: true,
+            falseInterruptionTimeout: 1000,
           },
-        }),
+        },
       });
 
       session.on(voice.AgentSessionEventTypes.Error, (ev: any) => {
@@ -127,18 +128,17 @@ If they're not interested after 2 real attempts, thank them warmly and let them 
         console.log("[Session] Closed:", ev.reason);
       });
 
-      console.log("[Vending Pitcher] Starting Realtime session...");
+      console.log("[Vending Pitcher] Starting session...");
       await session.start({ agent: salesAgent, room: ctx.room });
-      console.log("[Vending Pitcher] Session started — Sara is live!");
+      console.log("[Vending Pitcher] Session started — Marcus is live!");
 
-      // With Realtime API, use generateReply() to trigger Sara's opening line
-      // session.say() requires a TTS model which Realtime API handles internally
+      const greeting = session.say(
+        `Hey, is this ${leadName}? Hey — my name's Sara, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new smart vending machines in the area and I thought ${businessName} would be a great fit. Got literally 60 seconds?`
+      );
       try {
-        await session.generateReply({
-          instructions: `Say exactly this opening line to start the call: "Hey, is this ${leadName}? Hey — my name's Sara, I'm calling from Solomon's Logic AI Vending Machines. I promise I'll keep this quick — we're placing some brand new smart vending machines in the area and I thought ${businessName} would be a great fit. Got literally 60 seconds?"`,
-        });
+        await greeting.waitForPlayout();
       } catch (e) {
-        console.error("[Vending Pitcher] Opening greeting error:", e);
+        console.error("[Vending Pitcher] Greeting error:", e);
       }
 
       const hb = setInterval(() => console.log("[Vending Pitcher] heartbeat"), 10_000);
